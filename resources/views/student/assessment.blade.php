@@ -42,15 +42,32 @@
             </div>
         </div>
     @endif
+
+    <div class="row justify-content-center mb-3">
+        <div class="col-md-10">
+            <div class="alert alert-info">
+                <strong>Batch Asesmen:</strong> {{ $selectedBatch->batch_name }}
+            </div>
+
+            @if(!empty($forcedCategory))
+                <div class="alert alert-warning mb-0">
+                    <strong>Mode Batch 2:</strong> Soal yang ditampilkan khusus bidang <strong>{{ $forcedCategory->display_name }}</strong> berdasarkan rekomendasi hasil Batch 1.
+                </div>
+            @endif
+        </div>
+    </div>
     
     <div class="row justify-content-center">
         <div class="col-md-10">
             <form id="assessmentForm" method="POST" action="{{ route('student.assessment.submit') }}">
                 @csrf
+                <input type="hidden" name="batch_id" value="{{ $selectedBatch->id }}">
                 @php $question_number = 1; @endphp
                 @foreach ($categories as $category)
+                    @continue($category->questions->isEmpty())
+
                     <div class="category-header">
-                        <h4>{{ $category->icon }} {{ $category->category_name }}</h4>
+                        <h4>{{ $category->icon }} {{ $category->display_name }}</h4>
                         <p class="mb-0">Jawab pertanyaan berikut sesuai dengan minat dan kemampuan Anda</p>
                     </div>
                     
@@ -59,23 +76,17 @@
                             <div class="card-body">
                                 <h6 class="mb-3">{{ $question_number }}. {{ $q->question_text }}</h6>
                                 
-                                <div class="row">
-                                    <div class="col-md-6 mb-2">
-                                        <div class="answer-option" data-question="{{ $q->id }}" data-answer="Ya">
-                                            <input type="radio" name="q_{{ $q->id }}" value="Ya" id="q{{ $q->id }}_ya" required hidden>
-                                            <label for="q{{ $q->id }}_ya" class="w-100 mb-0" style="cursor: pointer;">
-                                                <strong>✅ Ya</strong>
-                                            </label>
+                                <div class="row g-2">
+                                    @foreach($q->options as $option)
+                                        <div class="col-md-6">
+                                            <div class="answer-option" data-question="{{ $q->id }}" data-option="{{ $option->id }}">
+                                                <input type="radio" name="q_{{ $q->id }}" value="{{ $option->id }}" id="q{{ $q->id }}_opt{{ $option->id }}" required hidden>
+                                                <label for="q{{ $q->id }}_opt{{ $option->id }}" class="w-100 mb-0" style="cursor: pointer;">
+                                                    <strong>{{ $option->option_text }}</strong>
+                                                </label>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="col-md-6 mb-2">
-                                        <div class="answer-option" data-question="{{ $q->id }}" data-answer="Tidak">
-                                            <input type="radio" name="q_{{ $q->id }}" value="Tidak" id="q{{ $q->id }}_tidak" required hidden>
-                                            <label for="q{{ $q->id }}_tidak" class="w-100 mb-0" style="cursor: pointer;">
-                                                <strong>❌ Tidak</strong>
-                                            </label>
-                                        </div>
-                                    </div>
+                                    @endforeach
                                 </div>
                             </div>
                         </div>
@@ -99,15 +110,17 @@
 <script>
     $('.answer-option').click(function() {
         const questionId = $(this).data('question');
-        const answer = $(this).data('answer');
+        const optionId = $(this).data('option');
         
         $(`[data-question="${questionId}"]`).removeClass('selected');
         $(this).addClass('selected');
-        $(`input[name="q_${questionId}"][value="${answer}"]`).prop('checked', true);
+        $(`input[name="q_${questionId}"][value="${optionId}"]`).prop('checked', true);
     });
     
     $('#assessmentForm').submit(function(e) {
-        const totalQuestions = $('input[type="radio"]').length / 2;
+        const totalQuestions = new Set($('input[type="radio"]').map(function() {
+            return $(this).attr('name');
+        }).get()).size;
         const answeredQuestions = $('input[type="radio"]:checked').length;
         
         if (answeredQuestions < totalQuestions) {

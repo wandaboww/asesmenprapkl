@@ -31,6 +31,17 @@ Route::middleware('admin')->prefix('admin')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
     Route::get('/results', [AdminController::class, 'results'])->name('admin.results');
     Route::get('/export-excel', [AdminController::class, 'exportExcel'])->name('admin.export');
+    Route::get('/questions', [AdminController::class, 'manageQuestions'])->name('admin.questions');
+    Route::post('/questions', [AdminController::class, 'storeQuestion'])->name('admin.questions.store');
+    Route::post('/questions/import', [AdminController::class, 'importQuestions'])->name('admin.questions.import');
+    Route::get('/questions/export', [AdminController::class, 'exportQuestions'])->name('admin.questions.export');
+    Route::get('/questions/template', [AdminController::class, 'downloadQuestionTemplate'])->name('admin.questions.template');
+    Route::get('/questions/{question}/edit', [AdminController::class, 'editQuestion'])->name('admin.questions.edit');
+    Route::put('/questions/{question}', [AdminController::class, 'updateQuestion'])->name('admin.questions.update');
+    Route::delete('/questions/{question}', [AdminController::class, 'deleteQuestion'])->name('admin.questions.delete');
+    Route::post('/batches', [AdminController::class, 'storeBatch'])->name('admin.batches.store');
+    Route::put('/batches/{batch}', [AdminController::class, 'updateBatch'])->name('admin.batches.update');
+    Route::post('/batches/{batch}/activate', [AdminController::class, 'activateBatch'])->name('admin.batches.activate');
     Route::get('/students', [AdminController::class, 'manageStudents'])->name('admin.students');
     Route::post('/students/import', [AdminController::class, 'importStudents'])->name('admin.students.import');
     Route::get('/students/template', [AdminController::class, 'downloadTemplate'])->name('admin.students.template');

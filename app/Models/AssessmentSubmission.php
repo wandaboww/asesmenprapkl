@@ -12,11 +12,20 @@ class AssessmentSubmission extends Model
     const CREATED_AT = 'submitted_at';
     const UPDATED_AT = null;
 
-    protected $fillable = ['student_id', 'submitted_at'];
+    protected $fillable = ['student_id', 'batch_id', 'submitted_at'];
+
+    protected $casts = [
+        'submitted_at' => 'datetime',
+    ];
 
     public function student()
     {
         return $this->belongsTo(Student::class);
+    }
+
+    public function batch()
+    {
+        return $this->belongsTo(AssessmentBatch::class, 'batch_id');
     }
 
     public function answers()

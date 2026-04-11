@@ -9,6 +9,38 @@
     .nav-link:hover { transform: translateY(-2px); color: #fff !important; }
     
     .card { border-radius: 15px; border: none; box-shadow: 0 8px 25px rgba(0,0,0,0.06); }
+
+    .badge-class-soft {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 0.35rem 0.65rem;
+        font-size: 0.74rem;
+        font-weight: 700;
+        border: 1px solid transparent;
+        line-height: 1;
+        background: #e2e8f0;
+        color: #334155;
+        border-color: #cbd5e1;
+    }
+
+    .badge-class-pplg1 {
+        background: #dbeafe;
+        color: #1e3a8a;
+        border-color: #bfdbfe;
+    }
+
+    .badge-class-pplg2 {
+        background: #dcfce7;
+        color: #166534;
+        border-color: #bbf7d0;
+    }
+
+    .badge-class-pplg3 {
+        background: #fef3c7;
+        color: #92400e;
+        border-color: #fde68a;
+    }
     
     @media (max-width: 768px) {
         .navbar-collapse { padding-top: 15px; }
@@ -31,6 +63,9 @@
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('admin.results') }}">Hasil Asesmen</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('admin.questions') }}">Kelola Soal</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link active" href="{{ route('admin.students') }}">Kelola Siswa</a>
@@ -67,7 +102,7 @@
                     <form action="{{ route('admin.students.import') }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         <div class="mb-3">
-                            <input class="form-control" type="file" name="excel_file" required accept=".xlsx,.xls,.csv">
+                            <input class="form-control" type="file" name="excel_file" required accept=".xlsx">
                         </div>
                         <button class="btn btn-primary w-100">Upload & Import</button>
                     </form>
@@ -110,9 +145,18 @@
                         </thead>
                         <tbody>
                             @forelse($students as $index => $student)
+                            @php
+                                $classNameNormalized = strtolower(trim((string) optional($student->studentClass)->class_name));
+                                $classBadgeClass = match ($classNameNormalized) {
+                                    '11 pplg 1' => 'badge-class-pplg1',
+                                    '11 pplg 2' => 'badge-class-pplg2',
+                                    '11 pplg 3' => 'badge-class-pplg3',
+                                    default => '',
+                                };
+                            @endphp
                             <tr>
                                 <td>{{ $index + 1 }}</td>
-                                <td><span class="badge bg-info text-dark">{{ $student->studentClass->class_name }}</span></td>
+                                <td><span class="badge-class-soft {{ $classBadgeClass }}">{{ $student->studentClass->class_name }}</span></td>
                                 <td>{{ $student->full_name }}</td>
                                 <td>
                                     <form action="{{ route('admin.students.delete', $student->id) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus siswa ini? Data hasil assessmentnya juga akan terhapus.');">

@@ -51,10 +51,103 @@
             @if(session('success'))
                 <div class="alert alert-success">{{ session('success') }}</div>
             @endif
+
+            @if(session('error'))
+                <div class="alert alert-danger">{{ session('error') }}</div>
+            @endif
             
             <div class="alert alert-info" role="alert">
                 <h4 class="alert-heading"><i class="fas fa-info-circle"></i> Petunjuk</h4>
-                <p class="mb-0">Assessment ini terdiri dari 60 pertanyaan yang dibagi menjadi 3 bidang kompetensi. Jawab dengan jujur untuk mendapatkan rekomendasi industri yang akurat!</p>
+                <p class="mb-0">Jawab asesmen dengan jujur untuk mendapatkan rekomendasi industri yang akurat.</p>
+            </div>
+
+            @if($activeBatch)
+                <div class="alert alert-primary" role="alert">
+                    <strong>Batch Aktif:</strong> {{ $activeBatch->batch_name }}
+                </div>
+            @else
+                <div class="alert alert-warning" role="alert">
+                    Belum ada batch asesmen yang aktif. Silakan hubungi admin.
+                </div>
+            @endif
+
+            <div class="card shadow-sm mb-4" style="border-radius: 15px;">
+                <div class="card-body p-4">
+                    <h5 class="mb-3"><i class="fas fa-layer-group"></i> Progress Batch Asesmen</h5>
+                    <div class="row">
+                        @forelse($batchProgresses as $progress)
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100 border {{ $progress['batch']->is_active ? 'border-primary' : '' }}" style="box-shadow: 0 4px 14px rgba(0,0,0,0.08);">
+                                    <div class="card-body d-flex flex-column">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h6 class="mb-0">{{ $progress['batch']->batch_name }}</h6>
+                                            <span class="badge bg-{{ $progress['status_class'] }}">{{ $progress['status_label'] }}</span>
+                                        </div>
+
+                                        @if($progress['submission'])
+                                            <small class="text-muted d-block mb-3">
+                                                Sudah submit pada {{ optional($progress['submission']->submitted_at)->format('d/m/Y H:i') }}
+                                            </small>
+
+                                            <a href="{{ route('student.result', ['batch_id' => $progress['batch']->id]) }}" class="btn btn-primary btn-sm mt-auto">
+                                                <i class="fas fa-search"></i> Lihat Hasil Asesmen
+                                            </a>
+                                        @elseif($progress['can_start'])
+                                            <small class="text-muted d-block mb-3">
+                                                Batch aktif dan siap dikerjakan.
+                                                @if(!empty($progress['category_hint']))
+                                                    Fokus soal: <strong>{{ $progress['category_hint'] }}</strong>.
+                                                @endif
+                                            </small>
+
+                                            <a href="{{ route('student.assessment', ['batch_id' => $progress['batch']->id]) }}" class="btn btn-start btn-sm mt-auto">
+                                                <i class="fas fa-play-circle"></i> Mulai Assessment {{ $progress['batch']->batch_name }}
+                                            </a>
+                                        @elseif(!$progress['batch']->is_active)
+                                            <small class="text-muted d-block mb-3">
+                                                Batch ini belum aktif. Menunggu admin mengaktifkan batch.
+                                            </small>
+
+                                            <button class="btn btn-secondary btn-sm mt-auto" disabled>
+                                                <i class="fas fa-lock"></i> Menunggu Batch Aktif
+                                            </button>
+                                        @elseif(!empty($progress['blocked_reason']))
+                                            <small class="text-muted d-block mb-3">
+                                                {{ $progress['blocked_reason'] }}
+                                            </small>
+
+                                            <button class="btn btn-secondary btn-sm mt-auto" disabled>
+                                                <i class="fas fa-lock"></i> Belum Bisa Dikerjakan
+                                            </button>
+                                        @elseif(!$progress['has_questions'])
+                                            <small class="text-muted d-block mb-3">
+                                                Soal pada batch ini belum tersedia.
+                                            </small>
+
+                                            <button class="btn btn-secondary btn-sm mt-auto" disabled>
+                                                <i class="fas fa-file-alt"></i> Soal Belum Tersedia
+                                            </button>
+                                        @else
+                                            <small class="text-muted d-block mb-3">
+                                                Batch belum bisa dikerjakan saat ini.
+                                            </small>
+
+                                            <button class="btn btn-secondary btn-sm mt-auto" disabled>
+                                                <i class="fas fa-lock"></i> Belum Tersedia
+                                            </button>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="col-12">
+                                <div class="alert alert-warning mb-0">
+                                    Belum ada batch asesmen yang dibuat oleh admin.
+                                </div>
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
             </div>
             
             <div class="row mb-4">
@@ -62,7 +155,7 @@
                     <div class="card text-center">
                         <div class="card-body">
                             <div class="competency-icon">💻</div>
-                            <h5 class="card-title">Pemrograman Website</h5>
+                            <h5 class="card-title">Pemrograman</h5>
                             <p class="card-text">HTML, CSS, JavaScript, Database</p>
                         </div>
                     </div>
@@ -71,7 +164,7 @@
                     <div class="card text-center">
                         <div class="card-body">
                             <div class="competency-icon">📋</div>
-                            <h5 class="card-title">Administrasi Perkantoran</h5>
+                            <h5 class="card-title">Administrasi</h5>
                             <p class="card-text">Data Entry, Laporan, Dokumentasi</p>
                         </div>
                     </div>
@@ -87,17 +180,6 @@
                 </div>
             </div>
             
-            <div class="text-center mt-4 mb-5">
-                @if($already_submitted)
-                    <a href="{{ route('student.result') }}" class="btn btn-primary px-5 py-3" style="border-radius: 50px; font-weight: bold; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(0,123,255,0.3);">
-                        <i class="fas fa-search"></i> Lihat Hasil Asesmen Anda
-                    </a>
-                @else
-                    <a href="{{ route('student.assessment') }}" class="btn btn-start px-5 py-3" style="border-radius: 50px; font-weight: bold; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(40,167,69,0.3);">
-                        <i class="fas fa-play-circle"></i> Mulai Assessment Sekarang
-                    </a>
-                @endif
-            </div>
         </div>
     </div>
 </div>

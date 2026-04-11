@@ -16,8 +16,13 @@ class Student extends Model
         return $this->belongsTo(StudentClass::class, 'class_id');
     }
 
+    public function submissions()
+    {
+        return $this->hasMany(AssessmentSubmission::class);
+    }
+
     public function submission()
     {
-        return $this->hasOne(AssessmentSubmission::class);
+        return $this->hasOne(AssessmentSubmission::class)->latestOfMany('submitted_at');
     }
 }

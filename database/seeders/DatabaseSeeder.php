@@ -13,6 +13,24 @@ class DatabaseSeeder extends Seeder
     {
         $now = Carbon::now();
 
+        $existingBatch = DB::table('assessment_batches')->where('batch_name', 'Batch 1')->first();
+        if ($existingBatch) {
+            $batch1Id = $existingBatch->id;
+            DB::table('assessment_batches')->where('id', $batch1Id)->update([
+                'description' => 'Batch awal asesmen.',
+                'is_active' => true,
+                'updated_at' => $now,
+            ]);
+        } else {
+            $batch1Id = DB::table('assessment_batches')->insertGetId([
+                'batch_name' => 'Batch 1',
+                'description' => 'Batch awal asesmen.',
+                'is_active' => true,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+        }
+
         // Admin Default
         DB::table('admins')->insert([
             'username' => 'admin',
@@ -24,8 +42,8 @@ class DatabaseSeeder extends Seeder
 
         // Kategori Kompetensi
         $categories = [
-            ['category_name' => 'Pemrograman Website', 'description' => 'Skill teknis seperti HTML, CSS, JavaScript, database', 'icon' => '💻'],
-            ['category_name' => 'Administrasi Perkantoran', 'description' => 'Kemampuan perkantoran, manajemen data, surat menyurat', 'icon' => '📋'],
+            ['category_name' => 'Pemrograman', 'description' => 'Skill teknis seperti HTML, CSS, JavaScript, database', 'icon' => '💻'],
+            ['category_name' => 'Administrasi', 'description' => 'Kemampuan perkantoran, manajemen data, surat menyurat', 'icon' => '📋'],
             ['category_name' => 'Digital Marketing', 'description' => 'Desain grafis, media sosial, iklan digital, live host', 'icon' => '📱'],
         ];
 
@@ -41,12 +59,9 @@ class DatabaseSeeder extends Seeder
 
         // Industri
         $industries = [
-            ['industry_name' => 'Software House & Digital Agency', 'description' => 'Perusahaan yang mengembangkan aplikasi/website sekaligus mengelola pemasaran digital', 'primary_competency' => 'programming', 'secondary_competency' => 'marketing'],
-            ['industry_name' => 'Tech Startup / SaaS Company', 'description' => 'Startup teknologi yang butuh development dan administrasi sistem', 'primary_competency' => 'programming', 'secondary_competency' => 'administration'],
-            ['industry_name' => 'Creative Digital Agency', 'description' => 'Agency kreatif yang fokus konten digital dengan dukungan web development', 'primary_competency' => 'marketing', 'secondary_competency' => 'programming'],
-            ['industry_name' => 'Media & Broadcasting Company', 'description' => 'Perusahaan media yang mengelola konten kreatif dan administrasi konten', 'primary_competency' => 'marketing', 'secondary_competency' => 'administration'],
-            ['industry_name' => 'Pemerintahan / E-Government', 'description' => 'Instansi pemerintah yang mengelola sistem digital dan administrasi', 'primary_competency' => 'administration', 'secondary_competency' => 'programming'],
-            ['industry_name' => 'Corporate / BUMN', 'description' => 'Perusahaan besar dengan fokus administrasi korporat dan branding', 'primary_competency' => 'administration', 'secondary_competency' => 'marketing']
+            ['industry_name' => 'Pemrograman', 'description' => 'Rekomendasi bidang pemrograman: pengembangan aplikasi, website, database, dan sistem informasi.', 'primary_competency' => 'programming', 'secondary_competency' => 'marketing'],
+            ['industry_name' => 'Administrasi', 'description' => 'Rekomendasi bidang administrasi: pengarsipan, pengolahan data, dokumen, dan operasional perkantoran.', 'primary_competency' => 'administration', 'secondary_competency' => 'marketing'],
+            ['industry_name' => 'Digital Marketing', 'description' => 'Rekomendasi bidang digital marketing: konten kreatif, media sosial, branding, dan promosi digital.', 'primary_competency' => 'marketing', 'secondary_competency' => 'administration'],
         ];
         foreach ($industries as $i) {
             DB::table('industries')->insert(array_merge($i, ['created_at' => $now, 'updated_at' => $now]));
@@ -105,17 +120,50 @@ class DatabaseSeeder extends Seeder
             'Apakah Anda suka brainstorming ide kampanye kreatif?'
         ];
 
+        $insertQuestion = function (int $categoryId, string $questionText, int $order) use ($batch1Id, $now) {
+            $questionId = DB::table('assessment_questions')->insertGetId([
+                'batch_id' => $batch1Id,
+                'category_id' => $categoryId,
+                'question_text' => $questionText,
+                'question_order' => $order,
+                'is_active' => true,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+
+            DB::table('assessment_question_options')->insert([
+                [
+                    'question_id' => $questionId,
+                    'option_text' => 'Ya',
+                    'option_score' => 1,
+                    'option_order' => 1,
+                    'is_active' => true,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ],
+                [
+                    'question_id' => $questionId,
+                    'option_text' => 'Tidak',
+                    'option_score' => 0,
+                    'option_order' => 2,
+                    'is_active' => true,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ],
+            ]);
+        };
+
         $order = 1;
         foreach ($q_web as $q) {
-            DB::table('assessment_questions')->insert(['category_id' => 1, 'question_text' => $q, 'question_order' => $order++, 'is_active' => true, 'created_at' => $now, 'updated_at' => $now]);
+            $insertQuestion(1, $q, $order++);
         }
         $order = 1;
         foreach ($q_admin as $q) {
-            DB::table('assessment_questions')->insert(['category_id' => 2, 'question_text' => $q, 'question_order' => $order++, 'is_active' => true, 'created_at' => $now, 'updated_at' => $now]);
+            $insertQuestion(2, $q, $order++);
         }
         $order = 1;
         foreach ($q_mkt as $q) {
-            DB::table('assessment_questions')->insert(['category_id' => 3, 'question_text' => $q, 'question_order' => $order++, 'is_active' => true, 'created_at' => $now, 'updated_at' => $now]);
+            $insertQuestion(3, $q, $order++);
         }
     }
 }

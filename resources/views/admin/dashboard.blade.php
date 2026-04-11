@@ -7,48 +7,160 @@
     .navbar-brand { font-weight: 700; font-size: 1.4rem; }
     .nav-link { font-weight: 500; transition: 0.3s; }
     .nav-link:hover { transform: translateY(-2px); color: #fff !important; }
-    
-    .card-stat { 
-        border-radius: 15px; 
-        border: none; 
-        box-shadow: 0 8px 20px rgba(0,0,0,0.08); 
+
+    .card-stat {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.08);
         transition: transform 0.3s ease, box-shadow 0.3s ease;
         overflow: hidden;
         position: relative;
     }
+
     .card-stat:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 12px 25px rgba(0,0,0,0.15);
-    }
-    .card-stat .card-body { position: relative; z-index: 2; padding: 25px; }
-    .card-stat h6 { font-size: 1rem; opacity: 0.9; margin-bottom: 10px; font-weight: 600;}
-    .card-stat h3 { font-size: 2.5rem; font-weight: 700; margin-bottom: 0; }
-    
-    /* Decorative circles for stat cards */
-    .card-stat::after {
-        content: ''; position: absolute; top: -20px; right: -20px; 
-        width: 100px; height: 100px; border-radius: 50%;
-        background: rgba(255,255,255,0.15); z-index: 1;
-    }
-    .card-stat::before {
-        content: ''; position: absolute; bottom: -30px; left: -10px; 
-        width: 80px; height: 80px; border-radius: 50%;
-        background: rgba(255,255,255,0.1); z-index: 1;
+        transform: translateY(-4px);
+        box-shadow: 0 12px 25px rgba(0,0,0,0.12);
     }
 
-    .chart-container-wrapper {
+    .card-stat .card-body {
+        position: relative;
+        z-index: 2;
+        padding: 22px;
+    }
+
+    .card-stat h6 {
+        font-size: 0.95rem;
+        opacity: 0.95;
+        margin-bottom: 8px;
+        font-weight: 600;
+    }
+
+    .card-stat h3 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0;
+    }
+
+    .card-stat::after {
+        content: '';
+        position: absolute;
+        top: -26px;
+        right: -18px;
+        width: 90px;
+        height: 90px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.14);
+        z-index: 1;
+    }
+
+    .card-stat::before {
+        content: '';
+        position: absolute;
+        bottom: -25px;
+        left: -15px;
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.1);
+        z-index: 1;
+    }
+
+    .chart-panel {
         border-radius: 15px;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.06);
-        background: #ffffff;
-        padding: 30px;
         border: none;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.06);
+        background: #fff;
+        padding: 20px;
+        height: 100%;
+    }
+
+    .chart-canvas-wrap {
+        position: relative;
+        height: 320px;
+    }
+
+    .batch-detail-card {
+        border-radius: 14px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+        height: 100%;
+    }
+
+    .badge-soft {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 0.3rem 0.6rem;
+        font-size: 0.72rem;
+        font-weight: 700;
+        border: 1px solid transparent;
+    }
+
+    .badge-soft-active {
+        background: #dcfce7;
+        color: #166534;
+        border-color: #bbf7d0;
+    }
+
+    .badge-soft-inactive {
+        background: #f1f5f9;
+        color: #475569;
+        border-color: #e2e8f0;
+    }
+
+    .badge-soft-complete {
+        background: #dcfce7;
+        color: #166534;
+        border-color: #bbf7d0;
+    }
+
+    .badge-soft-pending {
+        background: #fef3c7;
+        color: #92400e;
+        border-color: #fde68a;
+    }
+
+    .badge-soft-industry {
+        background: #dbeafe;
+        color: #1d4ed8;
+        border-color: #bfdbfe;
+    }
+
+    .metric-box {
+        background: #f8fafc;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        padding: 10px 12px;
+    }
+
+    .detail-table th {
+        white-space: nowrap;
+        background: #f8fafc;
+        font-size: 0.82rem;
+    }
+
+    .detail-table td {
+        font-size: 0.84rem;
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+
+    .section-title {
+        font-weight: 700;
+        margin-bottom: 14px;
     }
 
     @media (max-width: 768px) {
-        .card-stat-col { margin-bottom: 20px; }
-        .chart-container-wrapper { padding: 15px; }
         .navbar-collapse { padding-top: 15px; }
-        .admin-user-info { margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); width: 100%; justify-content: space-between; }
+        .admin-user-info {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .chart-canvas-wrap { height: 260px; }
     }
 </style>
 @endsection
@@ -69,6 +181,9 @@
                     <a class="nav-link" href="{{ route('admin.results') }}">Hasil Asesmen</a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link" href="{{ route('admin.questions') }}">Kelola Soal</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="{{ route('admin.students') }}">Kelola Siswa</a>
                 </li>
             </ul>
@@ -81,85 +196,408 @@
 </nav>
 
 <div class="container-fluid mt-4 mb-5">
-    
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
-    
+
     @if(session('error'))
         <div class="alert alert-danger">{{ session('error') }}</div>
     @endif
 
-
-    
-    <div class="row mb-4">
-        <div class="col-md-4 card-stat-col">
-            <div class="card card-stat text-white" style="background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);">
-                <div class="card-body">
-                    <h6><i class="fas fa-users"></i> Total Siswa (Sesuai Filter)</h6>
-                    <h3>{{ count($students) }}</h3>
-                </div>
-            </div>
+    @if($comparisonBatches->count() < 2)
+        <div class="alert alert-warning">
+            Dashboard perbandingan memerlukan minimal 2 batch. Saat ini terdeteksi {{ $comparisonBatches->count() }} batch.
         </div>
-        <div class="col-md-4 card-stat-col">
-            <div class="card card-stat text-white" style="background: linear-gradient(135deg, #1cc88a 0%, #13855c 100%);">
-                <div class="card-body">
-                    <h6><i class="fas fa-check-circle"></i> Sudah Mengerjakan</h6>
-                    <h3>{{ $students->filter(function($s) { return $s->submission !== null; })->count() }}</h3>
-                </div>
-            </div>
+    @else
+        <div class="alert alert-info d-flex flex-wrap gap-2 align-items-center">
+            <span><strong>Mode Dashboard:</strong> Perbandingan tanpa filter batch.</span>
+            @foreach($comparisonBatches as $batch)
+                <span class="badge-soft {{ $batch->is_active ? 'badge-soft-active' : 'badge-soft-inactive' }}">
+                    {{ $batch->batch_name }}{{ $batch->is_active ? ' (Aktif)' : '' }}
+                </span>
+            @endforeach
         </div>
-        <div class="col-md-4 card-stat-col">
-            <div class="card card-stat text-white" style="background: linear-gradient(135deg, #f6c23e 0%, #dda20a 100%);">
-                <div class="card-body">
-                    <h6><i class="fas fa-exclamation-circle"></i> Belum Mengerjakan</h6>
-                    <h3>{{ $students->filter(function($s) { return $s->submission === null; })->count() }}</h3>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    @if(count($chartLabels) > 0)
-    <div class="card chart-container-wrapper mb-4">
-        <h5 class="mb-4 font-weight-bold shadow-sm-text"><i class="fas fa-chart-pie text-primary"></i> Ringkasan Rekomendasi Industri</h5>
-        <div style="height: 350px; width: 100%; display: flex; justify-content: center;">
-            <canvas id="industryChart"></canvas>
-        </div>
-    </div>
     @endif
 
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card card-stat text-white" style="background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);">
+                <div class="card-body">
+                    <h6><i class="fas fa-users"></i> Total Siswa</h6>
+                    <h3>{{ $totalStudents }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card card-stat text-white" style="background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%);">
+                <div class="card-body">
+                    <h6><i class="fas fa-file-signature"></i> Total Submission</h6>
+                    <h3>{{ $totalSubmissions }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card card-stat text-white" style="background: linear-gradient(135deg, #1cc88a 0%, #13855c 100%);">
+                <div class="card-body">
+                    <h6><i class="fas fa-chart-line"></i> Completion Rate</h6>
+                    <h3>{{ number_format($overallCompletionRate, 1) }}%</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card card-stat text-white" style="background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);">
+                <div class="card-body">
+                    <h6><i class="fas fa-star"></i> Rata-rata Skor Rekomendasi</h6>
+                    <h3>{{ number_format($overallAverageScore, 1) }}%</h3>
+                </div>
+            </div>
+        </div>
+    </div>
 
+    <div class="row mb-4">
+        @foreach($comparisonBatches as $batch)
+            @php $stat = $batchStats[$batch->id] ?? null; @endphp
+            <div class="col-lg-6 mb-3">
+                <div class="card batch-detail-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h5 class="mb-1">{{ $batch->batch_name }}</h5>
+                                <span class="badge-soft {{ $batch->is_active ? 'badge-soft-active' : 'badge-soft-inactive' }}">
+                                    {{ $batch->is_active ? 'Aktif' : 'Tidak Aktif' }}
+                                </span>
+                            </div>
+                            <a href="{{ route('admin.results', ['batch_id' => $batch->id]) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-external-link-alt"></i> Lihat Detail Hasil
+                            </a>
+                        </div>
+
+                        <div class="row g-2 mb-2">
+                            <div class="col-6">
+                                <div class="metric-box">
+                                    <small class="text-muted d-block">Sudah Mengerjakan</small>
+                                    <strong>{{ $stat['submitted_count'] ?? 0 }}</strong>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="metric-box">
+                                    <small class="text-muted d-block">Belum Mengerjakan</small>
+                                    <strong>{{ $stat['pending_count'] ?? 0 }}</strong>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="metric-box">
+                                    <small class="text-muted d-block">Completion Rate</small>
+                                    <strong>{{ number_format((float) ($stat['completion_rate'] ?? 0), 1) }}%</strong>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="metric-box">
+                                    <small class="text-muted d-block">Avg Skor Rekomendasi</small>
+                                    <strong>{{ number_format((float) ($stat['avg_recommendation_score'] ?? 0), 1) }}%</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <small class="text-muted d-block mb-1">Top Rekomendasi Industri</small>
+                            @if(!empty($stat['industry_counts']))
+                                <div class="d-flex flex-wrap gap-1">
+                                    @foreach(array_slice($stat['industry_counts'], 0, 3, true) as $industryName => $industryCount)
+                                        <span class="badge-soft badge-soft-industry">{{ $industryName }} ({{ $industryCount }})</span>
+                                    @endforeach
+                                </div>
+                            @else
+                                <span class="text-muted">Belum ada data rekomendasi industri.</span>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endforeach
+    </div>
+
+    <div class="row mb-4 g-3">
+        <div class="col-lg-6">
+            <div class="chart-panel">
+                <h6 class="section-title"><i class="fas fa-chart-bar text-primary"></i> Komparasi Progress Pengerjaan</h6>
+                <div class="chart-canvas-wrap">
+                    <canvas id="completionChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="chart-panel">
+                <h6 class="section-title"><i class="fas fa-chart-line text-primary"></i> Rata-rata Skor Rekomendasi</h6>
+                <div class="chart-canvas-wrap">
+                    <canvas id="avgScoreChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="chart-panel">
+                <h6 class="section-title"><i class="fas fa-bullseye text-primary"></i> Rata-rata Skor Kompetensi per Batch</h6>
+                <div class="chart-canvas-wrap">
+                    <canvas id="competencyChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="chart-panel">
+                <h6 class="section-title"><i class="fas fa-industry text-primary"></i> Distribusi Rekomendasi Industri</h6>
+                <div class="chart-canvas-wrap">
+                    <canvas id="industryCompareChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white border-bottom py-3">
+            <h6 class="mb-0"><i class="fas fa-school"></i> Rekap Per Kelas</h6>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 detail-table">
+                <thead>
+                    <tr>
+                        <th>Kelas</th>
+                        <th>Total Siswa</th>
+                        @foreach($comparisonBatches as $batch)
+                            <th>{{ $batch->batch_name }} - Submit</th>
+                            <th>{{ $batch->batch_name }} - Completion</th>
+                        @endforeach
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($classStats as $classRow)
+                        <tr>
+                            <td><strong>{{ $classRow['class']->class_name }}</strong></td>
+                            <td>{{ $classRow['total_students'] }}</td>
+                            @foreach($comparisonBatches as $batch)
+                                @php $batchClassStat = $classRow['per_batch'][$batch->id] ?? null; @endphp
+                                <td>{{ $batchClassStat['submitted_count'] ?? 0 }} / {{ $classRow['total_students'] }}</td>
+                                <td>{{ number_format((float) ($batchClassStat['completion_rate'] ?? 0), 1) }}%</td>
+                            @endforeach
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="{{ 2 + ($comparisonBatches->count() * 2) }}" class="text-center py-3">Belum ada data kelas.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+            <h6 class="mb-0"><i class="fas fa-table"></i> Detail Progress Siswa per Batch</h6>
+            <small class="text-muted">Menampilkan status, rekomendasi, skor, dan waktu submit untuk tiap batch.</small>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 detail-table">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Kelas</th>
+                        <th>Nama Siswa</th>
+                        @foreach($comparisonBatches as $batch)
+                            <th>{{ $batch->batch_name }} - Status</th>
+                            <th>{{ $batch->batch_name }} - Rekomendasi</th>
+                            <th>{{ $batch->batch_name }} - Skor</th>
+                            <th>{{ $batch->batch_name }} - Submit</th>
+                        @endforeach
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($students as $index => $student)
+                        <tr>
+                            <td>{{ $index + 1 }}</td>
+                            <td>{{ optional($student->studentClass)->class_name ?? '-' }}</td>
+                            <td>{{ $student->full_name }}</td>
+
+                            @foreach($comparisonBatches as $batch)
+                                @php
+                                    $submission = $student->submissions_by_batch->get($batch->id);
+                                    $recommendation = $submission ? $submission->recommendation : null;
+                                    $industry = $recommendation ? $recommendation->industry : null;
+                                @endphp
+
+                                <td>
+                                    @if($submission)
+                                        <span class="badge-soft badge-soft-complete">Selesai</span>
+                                    @else
+                                        <span class="badge-soft badge-soft-pending">Belum</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($industry)
+                                        <span class="badge-soft badge-soft-industry">{{ $industry->display_industry_name }}</span>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($recommendation)
+                                        <strong>{{ number_format((float) $recommendation->score, 1) }}%</strong>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
+                                <td>{{ $submission && $submission->submitted_at ? $submission->submitted_at->format('d/m/Y H:i') : '-' }}</td>
+                            @endforeach
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="{{ 3 + ($comparisonBatches->count() * 4) }}" class="text-center py-3">Belum ada data siswa.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 @endsection
 
 @section('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    @if(count($chartLabels) > 0)
-    const ctx = document.getElementById('industryChart').getContext('2d');
-    const myChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: {!! json_encode($chartLabels) !!},
-            datasets: [{
-                data: {!! json_encode($chartData) !!},
-                backgroundColor: [
-                    '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796', '#5a5c69'
+    const completionChartData = @json($completionChart);
+    const avgScoreChartData = @json($avgScoreChart);
+    const competencyCompareChartData = @json($competencyCompareChart);
+    const industryCompareChartData = @json($industryCompareChart);
+
+    const palette = ['#2563eb', '#059669', '#f59e0b', '#7c3aed', '#dc2626', '#0ea5e9'];
+
+    const completionCtx = document.getElementById('completionChart');
+    if (completionCtx) {
+        new Chart(completionCtx, {
+            type: 'bar',
+            data: {
+                labels: completionChartData.labels,
+                datasets: [
+                    {
+                        label: 'Sudah Mengerjakan',
+                        data: completionChartData.submitted,
+                        backgroundColor: '#16a34a',
+                        borderRadius: 8,
+                        maxBarThickness: 46,
+                    },
+                    {
+                        label: 'Belum Mengerjakan',
+                        data: completionChartData.pending,
+                        backgroundColor: '#f59e0b',
+                        borderRadius: 8,
+                        maxBarThickness: 46,
+                    },
                 ],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: window.innerWidth < 768 ? 'bottom' : 'right',
-                    labels: { padding: 20, font: { size: 13 } }
-                }
-            }
-        }
-    });
-    @endif
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' },
+                },
+            },
+        });
+    }
+
+    const avgScoreCtx = document.getElementById('avgScoreChart');
+    if (avgScoreCtx) {
+        new Chart(avgScoreCtx, {
+            type: 'line',
+            data: {
+                labels: avgScoreChartData.labels,
+                datasets: [
+                    {
+                        label: 'Avg Skor Rekomendasi (%)',
+                        data: avgScoreChartData.scores,
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.15)',
+                        tension: 0.35,
+                        fill: true,
+                        pointRadius: 4,
+                    },
+                ],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        min: 0,
+                        max: 100,
+                    },
+                },
+                plugins: {
+                    legend: { position: 'bottom' },
+                },
+            },
+        });
+    }
+
+    const competencyCtx = document.getElementById('competencyChart');
+    if (competencyCtx) {
+        new Chart(competencyCtx, {
+            type: 'radar',
+            data: {
+                labels: competencyCompareChartData.labels,
+                datasets: competencyCompareChartData.datasets.map((dataset, index) => ({
+                    label: dataset.label,
+                    data: dataset.data,
+                    borderColor: palette[index % palette.length],
+                    backgroundColor: palette[index % palette.length] + '33',
+                    pointBackgroundColor: palette[index % palette.length],
+                    pointRadius: 3,
+                    borderWidth: 2,
+                })),
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        suggestedMin: 0,
+                        suggestedMax: 100,
+                    },
+                },
+                plugins: {
+                    legend: { position: 'bottom' },
+                },
+            },
+        });
+    }
+
+    const industryCtx = document.getElementById('industryCompareChart');
+    if (industryCtx) {
+        new Chart(industryCtx, {
+            type: 'bar',
+            data: {
+                labels: industryCompareChartData.labels,
+                datasets: industryCompareChartData.datasets.map((dataset, index) => ({
+                    label: dataset.label,
+                    data: dataset.data,
+                    backgroundColor: palette[index % palette.length],
+                    borderRadius: 8,
+                    maxBarThickness: 44,
+                })),
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' },
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0,
+                        },
+                    },
+                },
+            },
+        });
+    }
 </script>
 @endsection

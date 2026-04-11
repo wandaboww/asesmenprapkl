@@ -14,6 +14,13 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow-x: hidden;
         }
+
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 1030;
+        }
+
         @media (max-width: 768px) {
             h1 { font-size: 1.8rem !important; }
             h3 { font-size: 1.5rem !important; }

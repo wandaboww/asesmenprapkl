@@ -56,23 +56,26 @@
                     <p class="text-center text-muted">
                         Diisi pada: {{ \Carbon\Carbon::parse($submission->submitted_at)->format('d/m/Y H:i') }}
                     </p>
+
+                    <p class="text-center text-muted mb-0">
+                        Batch: {{ $submission->batch ? $submission->batch->batch_name : '-' }}
+                    </p>
                     
                     <hr>
                     
                     <h5>Skor per Kompetensi:</h5>
                     <div class="row mb-4">
                         @foreach ($scores as $score)
-                            @php $percentage = ($score['yes'] / $score['total']) * 100; @endphp
                             <div class="col-md-6 mb-3">
                                 <div class="card shadow-sm border">
                                     <div class="card-body">
                                         <h6>{{ $score['name'] }}</h6>
                                         <div class="progress mb-2">
-                                            <div class="progress-bar bg-primary" style="width: {{ $percentage }}%">
-                                                {{ number_format($percentage, 1) }}%
+                                            <div class="progress-bar bg-primary" style="width: {{ $score['percentage'] }}%">
+                                                {{ number_format($score['percentage'], 1) }}%
                                             </div>
                                         </div>
-                                        <small class="text-muted">{{ $score['yes'] }}/{{ $score['total'] }} Ya</small>
+                                        <small class="text-muted">Skor {{ number_format($score['obtained'], 1) }} / {{ number_format($score['max'], 1) }}</small>
                                     </div>
                                 </div>
                             </div>
@@ -80,20 +83,37 @@
                     </div>
                     
                     @if ($submission->recommendation)
+                        @php
+                            $competencyLabelMap = [
+                                'administrasi' => 'Administrasi',
+                                'administration' => 'Administrasi',
+                                'digital_marketing' => 'Digital Marketing',
+                                'digital marketing' => 'Digital Marketing',
+                                'marketing' => 'Digital Marketing',
+                                'pemrograman' => 'Pemrograman',
+                                'programming' => 'Pemrograman',
+                            ];
+
+                            $primaryKey = strtolower((string) ($submission->recommendation->industry->primary_competency ?? ''));
+                            $secondaryKey = strtolower((string) ($submission->recommendation->industry->secondary_competency ?? ''));
+                            $primaryLabel = $competencyLabelMap[$primaryKey] ?? ucwords(str_replace('_', ' ', $primaryKey));
+                            $secondaryLabel = $competencyLabelMap[$secondaryKey] ?? ucwords(str_replace('_', ' ', $secondaryKey));
+                        @endphp
+
                         <hr>
                         <h5>Rekomendasi Industri:</h5>
                         <div class="alert alert-info mt-3 p-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 15px;">
                             <h5 style="color: white; font-weight: bold;">
-                                <i class="fas fa-briefcase"></i> {{ $submission->recommendation->industry->industry_name }}
+                                <i class="fas fa-briefcase"></i> {{ $submission->recommendation->industry->display_industry_name }}
                             </h5>
-                            <p class="mb-3">{{ $submission->recommendation->industry->description }}</p>
+                            <p class="mb-3">{{ $submission->recommendation->industry->display_industry_description }}</p>
                             <div class="mt-3">
                                 <small><strong>Kompetensi Dominan:</strong></small><br>
                                 <span class="badge bg-light text-dark" style="margin-right: 5px; text-transform: capitalize;">
-                                    {{ str_replace('_', ' ', $submission->recommendation->industry->primary_competency) }}
+                                    {{ $primaryLabel }}
                                 </span>
                                 <span class="badge bg-warning text-dark" style="text-transform: capitalize;">
-                                    {{ str_replace('_', ' ', $submission->recommendation->industry->secondary_competency) }}
+                                    {{ $secondaryLabel }}
                                 </span>
                             </div>
                         </div>
