@@ -49,6 +49,9 @@
                     <a class="nav-link active" href="{{ route('admin.questions') }}">Kelola Soal</a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link" href="{{ route('admin.batch2ct.index') }}">Kelola Soal Batch 2 CT</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="{{ route('admin.students') }}">Kelola Siswa</a>
                 </li>
             </ul>

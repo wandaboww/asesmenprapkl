@@ -149,6 +149,25 @@
                     </div>
                 </div>
             </div>
+
+            <div class="card shadow-sm mb-4" style="border-radius: 15px;">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div>
+                            <h5 class="mb-1"><i class="fas fa-brain"></i> Simulasi Batch 2 - Computational Thinking</h5>
+                            <p class="text-muted mb-0">Model soal berbobot W-M-A dengan dukungan multi attempt dan rekomendasi PKL.</p>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a href="{{ route('student.batch2ct.assessment') }}" class="btn btn-primary">
+                                <i class="fas fa-play-circle"></i> Mulai / Ulangi Simulasi CT
+                            </a>
+                            <a href="{{ route('student.batch2ct.result') }}" class="btn btn-outline-primary">
+                                <i class="fas fa-chart-line"></i> Lihat Hasil CT Terakhir
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
             
             <div class="row mb-4">
                 <div class="col-md-4 mb-3">

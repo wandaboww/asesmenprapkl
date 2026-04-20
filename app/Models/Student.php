@@ -25,4 +25,9 @@ class Student extends Model
     {
         return $this->hasOne(AssessmentSubmission::class)->latestOfMany('submitted_at');
     }
+
+    public function batchTwoCtResults()
+    {
+        return $this->hasMany(BatchTwoCtStudentResult::class, 'siswa_id');
+    }
 }

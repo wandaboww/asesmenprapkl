@@ -184,6 +184,9 @@
                     <a class="nav-link" href="{{ route('admin.questions') }}">Kelola Soal</a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link" href="{{ route('admin.batch2ct.index') }}">Kelola Soal Batch 2 CT</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="{{ route('admin.students') }}">Kelola Siswa</a>
                 </li>
             </ul>
@@ -318,7 +321,7 @@
     </div>
 
     <div class="row mb-4 g-3">
-        <div class="col-lg-6">
+        <div class="col-lg-3">
             <div class="chart-panel">
                 <h6 class="section-title"><i class="fas fa-chart-bar text-primary"></i> Komparasi Progress Pengerjaan</h6>
                 <div class="chart-canvas-wrap">
@@ -326,7 +329,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-lg-6">
+        <div class="col-lg-3">
             <div class="chart-panel">
                 <h6 class="section-title"><i class="fas fa-chart-line text-primary"></i> Rata-rata Skor Rekomendasi</h6>
                 <div class="chart-canvas-wrap">
@@ -334,7 +337,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-lg-6">
+        <div class="col-lg-3">
             <div class="chart-panel">
                 <h6 class="section-title"><i class="fas fa-bullseye text-primary"></i> Rata-rata Skor Kompetensi per Batch</h6>
                 <div class="chart-canvas-wrap">
@@ -342,7 +345,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-lg-6">
+        <div class="col-lg-3">
             <div class="chart-panel">
                 <h6 class="section-title"><i class="fas fa-industry text-primary"></i> Distribusi Rekomendasi Industri</h6>
                 <div class="chart-canvas-wrap">
@@ -366,6 +369,9 @@
                             <th>{{ $batch->batch_name }} - Submit</th>
                             <th>{{ $batch->batch_name }} - Completion</th>
                         @endforeach
+                        <th>Administrasi</th>
+                        <th>Digital Marketing</th>
+                        <th>Pemrograman</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -378,10 +384,13 @@
                                 <td>{{ $batchClassStat['submitted_count'] ?? 0 }} / {{ $classRow['total_students'] }}</td>
                                 <td>{{ number_format((float) ($batchClassStat['completion_rate'] ?? 0), 1) }}%</td>
                             @endforeach
+                            <td>{{ $classRow['competency_counts']['Administrasi'] ?? 0 }}</td>
+                            <td>{{ $classRow['competency_counts']['Digital Marketing'] ?? 0 }}</td>
+                            <td>{{ $classRow['competency_counts']['Pemrograman'] ?? 0 }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="{{ 2 + ($comparisonBatches->count() * 2) }}" class="text-center py-3">Belum ada data kelas.</td>
+                            <td colspan="{{ 5 + ($comparisonBatches->count() * 2) }}" class="text-center py-3">Belum ada data kelas.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -389,73 +398,6 @@
         </div>
     </div>
 
-    <div class="card shadow-sm border-0">
-        <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
-            <h6 class="mb-0"><i class="fas fa-table"></i> Detail Progress Siswa per Batch</h6>
-            <small class="text-muted">Menampilkan status, rekomendasi, skor, dan waktu submit untuk tiap batch.</small>
-        </div>
-        <div class="table-responsive">
-            <table class="table table-hover mb-0 detail-table">
-                <thead>
-                    <tr>
-                        <th>No</th>
-                        <th>Kelas</th>
-                        <th>Nama Siswa</th>
-                        @foreach($comparisonBatches as $batch)
-                            <th>{{ $batch->batch_name }} - Status</th>
-                            <th>{{ $batch->batch_name }} - Rekomendasi</th>
-                            <th>{{ $batch->batch_name }} - Skor</th>
-                            <th>{{ $batch->batch_name }} - Submit</th>
-                        @endforeach
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($students as $index => $student)
-                        <tr>
-                            <td>{{ $index + 1 }}</td>
-                            <td>{{ optional($student->studentClass)->class_name ?? '-' }}</td>
-                            <td>{{ $student->full_name }}</td>
-
-                            @foreach($comparisonBatches as $batch)
-                                @php
-                                    $submission = $student->submissions_by_batch->get($batch->id);
-                                    $recommendation = $submission ? $submission->recommendation : null;
-                                    $industry = $recommendation ? $recommendation->industry : null;
-                                @endphp
-
-                                <td>
-                                    @if($submission)
-                                        <span class="badge-soft badge-soft-complete">Selesai</span>
-                                    @else
-                                        <span class="badge-soft badge-soft-pending">Belum</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    @if($industry)
-                                        <span class="badge-soft badge-soft-industry">{{ $industry->display_industry_name }}</span>
-                                    @else
-                                        <span class="text-muted">-</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    @if($recommendation)
-                                        <strong>{{ number_format((float) $recommendation->score, 1) }}%</strong>
-                                    @else
-                                        <span class="text-muted">-</span>
-                                    @endif
-                                </td>
-                                <td>{{ $submission && $submission->submitted_at ? $submission->submitted_at->format('d/m/Y H:i') : '-' }}</td>
-                            @endforeach
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="{{ 3 + ($comparisonBatches->count() * 4) }}" class="text-center py-3">Belum ada data siswa.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>
 </div>
 @endsection
 

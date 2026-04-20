@@ -208,26 +208,61 @@ class AdminController extends Controller
             })->values()->all(),
         ];
 
-        $classStats = $classes->map(function ($class) use ($students, $comparisonBatches) {
+        $classStats = $classes->map(function ($class) use ($students, $comparisonBatches, $competencyLabels) {
             $classStudents = $students->where('class_id', $class->id);
             $classTotal = $classStudents->count();
+            $classCompetencyCounts = array_fill_keys($competencyLabels, 0);
+
+            foreach ($classStudents as $student) {
+                // Hitung satu kali per siswa berdasarkan submission terbaru di batch perbandingan.
+                $latestSubmission = $student->submissions->first();
+                $competencyLabel = $this->resolveRecommendationFieldFromSubmission($latestSubmission);
+
+                if ($competencyLabel && isset($classCompetencyCounts[$competencyLabel])) {
+                    $classCompetencyCounts[$competencyLabel]++;
+                }
+            }
+
             $perBatch = [];
 
             foreach ($comparisonBatches as $batch) {
-                $submittedCount = $classStudents->filter(function ($student) use ($batch) {
-                    return $student->submissions_by_batch->has($batch->id);
-                })->count();
+                $batchSubmissions = $classStudents
+                    ->map(function ($student) use ($batch) {
+                        return $student->submissions_by_batch->get($batch->id);
+                    })
+                    ->filter();
+
+                $submittedCount = $batchSubmissions->count();
+
+                $competencyCounts = array_fill_keys($competencyLabels, 0);
+                foreach ($batchSubmissions as $submission) {
+                    $industry = optional(optional($submission)->recommendation)->industry;
+                    if (!$industry) {
+                        continue;
+                    }
+
+                    $competencyLabel = $this->normalizeCompetencyLabel((string) $industry->primary_competency);
+                    if ($competencyLabel === '-') {
+                        $competencyLabel = CompetencyCategory::normalizeDisplayName((string) $industry->display_industry_name);
+                    }
+
+                    if (isset($competencyCounts[$competencyLabel])) {
+                        $competencyCounts[$competencyLabel]++;
+                    }
+                }
 
                 $perBatch[$batch->id] = [
                     'submitted_count' => $submittedCount,
                     'pending_count' => max(0, $classTotal - $submittedCount),
                     'completion_rate' => $classTotal > 0 ? round(($submittedCount / $classTotal) * 100, 1) : 0,
+                    'competency_counts' => $competencyCounts,
                 ];
             }
 
             return [
                 'class' => $class,
                 'total_students' => $classTotal,
+                'competency_counts' => $classCompetencyCounts,
                 'per_batch' => $perBatch,
             ];
         })->values();

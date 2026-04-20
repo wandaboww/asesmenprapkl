@@ -35,6 +35,99 @@ Aplikasi telah mengadopsi standar **Ultra Mobile Responsive** lengkap dengan des
 
 ---
 
+## 🧠 Model Soal & Skoring (Ringkasan Penting)
+
+Model soal pada sistem ini adalah **Single-Choice Weighted Question** (pilih 1 opsi per soal, tiap opsi punya bobot skor).
+
+- **Tipe Jawaban:** Satu soal hanya bisa memilih **satu** jawaban (radio).
+- **Struktur Opsi:** Tiap soal memiliki minimal 2 opsi, dan dapat ditambah fleksibel dari panel Admin.
+- **Bobot Nilai:** Tiap opsi menyimpan nilai numerik (`option_score`), urutan (`option_order`), dan status aktif/nonaktif.
+- **Default Template:** Seed bawaan menggunakan pola biner **Ya (1)** dan **Tidak (0)**, tetapi sistem mendukung banyak opsi dan skor desimal.
+
+### Cara Hitung Nilai
+
+- Nilai jawaban siswa diambil dari skor opsi yang dipilih.
+- Nilai maksimum per soal diambil dari **opsi skor tertinggi** pada soal tersebut.
+- Skor kompetensi dihitung per kategori dengan rumus:
+    `total skor diperoleh / total skor maksimum kategori * 100%`
+- Sistem mengurutkan kompetensi dari skor tertinggi untuk menentukan rekomendasi industri utama.
+
+### Catatan Batch
+
+- **Batch 1:** Siswa mengerjakan semua kategori kompetensi.
+- **Batch 2:** Soal difokuskan ke kategori hasil rekomendasi utama dari Batch 1.
+
+### Modul Baru: Batch 2 CT (Weighted Scoring W-M-A)
+
+Sistem kini menyediakan modul khusus **Batch 2 berbasis Computational Thinking** untuk memetakan kecenderungan siswa ke:
+
+1. **Web Programming (W)**
+2. **Digital Marketing (M)**
+3. **Administratif (A)**
+
+#### Struktur Data Batch 2 CT
+
+- **Soal CT:** `batch_two_ct_questions`
+    - `id`
+    - `jenis_ct` (`Decomposition`, `Pattern Recognition`, `Abstraction`, `Algorithmic Thinking`)
+    - `narasi_soal`
+    - `level_kesulitan` (`easy`, `medium`, `hard`)
+    - `is_active`
+- **Opsi Jawaban CT:** `batch_two_ct_question_options`
+    - `id`
+    - `soal_id`
+    - `label_opsi` (A/B/C/dst)
+    - `teks_opsi`
+    - `bobot_web` (0-4)
+    - `bobot_marketing` (0-4)
+    - `bobot_admin` (0-4)
+- **Hasil Siswa CT:** `batch_two_ct_student_results`
+    - `id`
+    - `siswa_id`
+    - `attempt_no` (multi attempt)
+    - `total_web`, `total_marketing`, `total_admin`
+    - `persen_web`, `persen_marketing`, `persen_admin`
+    - `rekomendasi`
+
+#### Logika Scoring Batch 2 CT
+
+- Saat siswa memilih opsi, sistem menambahkan bobot ke masing-masing kategori:
+    - `total_web = Σ bobot_web`
+    - `total_marketing = Σ bobot_marketing`
+    - `total_admin = Σ bobot_admin`
+
+#### Logika Penentuan Rekomendasi
+
+- Web tertinggi -> **Web Programming**
+- Marketing tertinggi -> **Digital Marketing**
+- Admin tertinggi -> **Administratif**
+- Seri kombinasi:
+    - Web + Marketing -> **Startup / Produk Digital**
+    - Web + Admin -> **Backend / System Support**
+    - Marketing + Admin -> **Admin Marketplace / Operasional Digital**
+
+#### Dashboard Batch 2 CT
+
+- Grafik rata-rata skor W-M-A.
+- Persentase kecenderungan siswa.
+- Distribusi rekomendasi PKL.
+- Ranking siswa per kategori (Web/Marketing/Admin).
+
+#### Fitur Tambahan Batch 2 CT
+
+- **Bank soal CT** dengan filter jenis CT dan level kesulitan.
+- **Import / Export soal** via **JSON** dan **Excel**.
+- **Randomisasi urutan soal** saat asesmen.
+- **Multi attempt** untuk simulasi ulang siswa.
+
+#### Akses Modul Batch 2 CT
+
+- Admin: `/admin/batch2-ct`
+- Siswa Assessment: `/batch2-ct/assessment`
+- Siswa Hasil: `/batch2-ct/result`
+
+---
+
 ## 📖 Cara Pemasangan / Penggunaan Sistem (_Guide_)
 
 ### Tahap 1: Inisialisasi Sistem
