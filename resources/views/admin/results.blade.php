@@ -1,184 +1,134 @@
-@extends('layouts.app')
+@extends('layouts.admin')
+
+@section('page_title', 'Hasil Assessment Siswa')
 
 @section('styles')
 <style>
-    body { background: #f4f6f9; }
-    .navbar { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); padding: 15px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-    .navbar-brand { font-weight: 700; font-size: 1.4rem; }
-    .nav-link { font-weight: 500; transition: 0.3s; }
-    .nav-link:hover { transform: translateY(-2px); color: #fff !important; }
+    .filter-card {
+        border-radius: 24px;
+        border: none;
+        box-shadow: 0 4px 25px rgba(0,0,0,0.03);
+        background: #fff;
+        padding: 30px;
+        margin-bottom: 30px;
+    }
+
+    .table-card {
+        border-radius: 24px;
+        border: none;
+        box-shadow: 0 4px 25px rgba(0,0,0,0.03);
+        background: #fff;
+        overflow: hidden;
+    }
 
     .badge-soft {
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        border-radius: 999px;
-        padding: 0.35rem 0.65rem;
-        font-size: 0.74rem;
+        border-radius: 10px;
+        padding: 0.5rem 0.9rem;
+        font-size: 0.75rem;
         font-weight: 700;
-        border: 1px solid transparent;
         line-height: 1;
+        border: 1px solid transparent;
     }
 
-    .badge-soft-class {
-        background: #e0f2fe;
-        color: #0c4a6e;
-        border-color: #bae6fd;
+    .badge-soft-class { background: #eef2ff; color: #4f46e5; border-color: #e0e7ff; }
+    .badge-soft-status-done { background: #ecfdf5; color: #10b981; border-color: #d1fae5; }
+    .badge-soft-status-wait { background: #f8fafc; color: #64748b; border-color: #f1f5f9; }
+    .badge-soft-industry { background: #fff7ed; color: #f59e0b; border-color: #ffedd5; }
+    .badge-soft-competency { background: #f0f9ff; color: #0ea5e9; border-color: #e0f2fe; }
+    .badge-soft-competency-alt { background: #fdf2f8; color: #db2777; border-color: #fce7f3; }
+    
+    .badge-batch-tone-1 { background: #f5f3ff; color: #7c3aed; border-color: #ede9fe; }
+    .badge-batch-tone-2 { background: #f0fdf4; color: #16a34a; border-color: #dcfce7; }
+    .badge-batch-tone-3 { background: #fff1f2; color: #e11d48; border-color: #ffe4e6; }
+    .badge-batch-tone-4 { background: #f0f9ff; color: #0284c7; border-color: #e0f2fe; }
+
+    .detail-table thead th {
+        background: #f8fafc;
+        padding: 20px;
+        font-weight: 700;
+        color: #64748b;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-top: none;
     }
 
-    .badge-soft-class-pplg1 {
-        background: #dbeafe;
-        color: #1e3a8a;
-        border-color: #bfdbfe;
+    .detail-table tbody td {
+        padding: 20px;
+        vertical-align: middle;
+        color: #1e293b;
+        font-weight: 500;
     }
 
-    .badge-soft-class-pplg2 {
-        background: #dcfce7;
-        color: #166534;
-        border-color: #bbf7d0;
-    }
-
-    .badge-soft-class-pplg3 {
-        background: #fef3c7;
-        color: #92400e;
-        border-color: #fde68a;
-    }
-
-    .badge-soft-status-done {
-        background: #dcfce7;
-        color: #166534;
-        border-color: #bbf7d0;
-    }
-
-    .badge-soft-status-wait {
+    .student-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
         background: #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
         color: #475569;
-        border-color: #e2e8f0;
-    }
-
-    .badge-soft-industry {
-        background: #dbeafe;
-        color: #1d4ed8;
-        border-color: #bfdbfe;
-        justify-content: flex-start;
-    }
-
-    .badge-soft-competency {
-        background: #ecfeff;
-        color: #0f766e;
-        border-color: #bae6fd;
-    }
-
-    .badge-soft-competency-alt {
-        background: #fef3c7;
-        color: #92400e;
-        border-color: #fde68a;
-    }
-
-    .badge-batch-tone-1 {
-        background: #e8f5e9;
-        color: #1b5e20;
-        border-color: #c8e6c9;
-    }
-
-    .badge-batch-tone-2 {
-        background: #e3f2fd;
-        color: #0d47a1;
-        border-color: #bbdefb;
-    }
-
-    .badge-batch-tone-3 {
-        background: #fff3e0;
-        color: #bf360c;
-        border-color: #ffe0b2;
-    }
-
-    .badge-batch-tone-4 {
-        background: #f3e5f5;
-        color: #6a1b9a;
-        border-color: #e1bee7;
-    }
-
-    .badge-batch-default {
-        background: #eceff1;
-        color: #37474f;
-        border-color: #cfd8dc;
+        font-size: 0.9rem;
     }
 
     .score-text {
-        color: #0f766e;
-        font-weight: 700;
-    }
-
-    .result-meta-card {
-        border: 1px solid #e5e7eb;
-        border-radius: 12px;
-        padding: 14px;
-        background: #f8fafc;
-    }
-
-    .score-progress {
-        height: 8px;
-        border-radius: 999px;
-        background: #e2e8f0;
-        overflow: hidden;
-    }
-
-    .score-progress .progress-bar {
-        background: linear-gradient(90deg, #2563eb 0%, #0ea5e9 100%);
-    }
-
-    .recommendation-panel {
-        border: 1px solid #dbeafe;
-        background: #eff6ff;
-        border-radius: 12px;
-        padding: 14px;
+        font-weight: 800;
+        color: var(--primary-color);
+        font-size: 1rem;
     }
 
     .action-wrap {
         display: flex;
-        flex-wrap: wrap;
         gap: 8px;
     }
-    
-    @media (max-width: 768px) {
-        .navbar-collapse { padding-top: 15px; }
-        .admin-user-info { margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); width: 100%; justify-content: space-between; }
+
+    .result-meta-card {
+        background: #f8fafc;
+        border-radius: 16px;
+        padding: 15px;
+        border: 1px solid #f1f5f9;
+        height: 100%;
     }
+
+    .score-progress {
+        height: 8px;
+        border-radius: 10px;
+        background: #f1f5f9;
+        overflow: hidden;
+        margin-top: 8px;
+    }
+
+    .score-progress .progress-bar {
+        background: var(--primary-gradient);
+        border-radius: 10px;
+    }
+
+    .recommendation-panel {
+        background: #fff;
+        border-radius: 20px;
+        padding: 20px;
+        border: 1px solid #eef2ff;
+        box-shadow: 0 4px 15px rgba(79, 70, 229, 0.05);
+    }
+
+    .btn-premium-sm {
+        padding: 8px 16px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.8rem;
+        transition: all 0.3s;
+    }
+
 </style>
 @endsection
 
 @section('content')
-<nav class="navbar navbar-dark navbar-expand-lg">
-    <div class="container-fluid">
-        <span class="navbar-brand"><i class="fas fa-shield-alt"></i> Admin Panel</span>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav me-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('admin.dashboard') }}">Dashboard</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link active" href="{{ route('admin.results') }}">Hasil Asesmen</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('admin.questions') }}">Kelola Soal</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('admin.students') }}">Kelola Siswa</a>
-                </li>
-            </ul>
-            <div class="d-flex align-items-center admin-user-info">
-                <span class="text-white me-3"><strong><i class="fas fa-user-circle"></i> {{ session('admin_name') }}</strong></span>
-                <a href="{{ route('admin.logout') }}" class="btn btn-sm btn-outline-light"><i class="fas fa-sign-out-alt"></i> Logout</a>
-            </div>
-        </div>
-    </div>
-</nav>
-
-<div class="container-fluid mt-4 mb-5">
+<div class="container-fluid">
     
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
@@ -188,38 +138,47 @@
         <div class="alert alert-danger">{{ session('error') }}</div>
     @endif
 
-    <div class="card shadow-sm border-0 mb-4 p-3">
-        <form method="GET" action="{{ route('admin.results') }}" class="row align-items-end g-3">
-            <div class="col-md-4">
-                <label class="form-label">Filter Kelas</label>
-                <select name="class_id" class="form-select">
-                    <option value="">-- Semua Kelas --</option>
-                    @foreach($classes as $c)
-                        <option value="{{ $c->id }}" {{ request('class_id') == $c->id ? 'selected' : '' }}>{{ $c->class_name }}</option>
-                    @endforeach
-                </select>
+    <div class="filter-card">
+        <form method="GET" action="{{ route('admin.results') }}" class="row g-4">
+            <div class="col-lg-3 col-md-6">
+                <label class="form-label fw-bold text-muted small uppercase mb-2">Filter Kelas</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="fas fa-school text-muted"></i></span>
+                    <select name="class_id" class="form-select bg-light border-start-0">
+                        <option value="">Semua Kelas</option>
+                        @foreach($classes as $c)
+                            <option value="{{ $c->id }}" {{ request('class_id') == $c->id ? 'selected' : '' }}>{{ $c->class_name }}</option>
+                        @endforeach
+                    </select>
+                </div>
             </div>
-            <div class="col-md-4">
-                <label class="form-label">Status Asesmen</label>
-                <select name="status" class="form-select">
-                    <option value="">-- Semua Status --</option>
-                    <option value="selesai" {{ request('status') == 'selesai' ? 'selected' : '' }}>Selesai Mengerjakan</option>
-                    <option value="belum" {{ request('status') == 'belum' ? 'selected' : '' }}>Belum Mengerjakan</option>
-                </select>
+            <div class="col-lg-3 col-md-6">
+                <label class="form-label fw-bold text-muted small uppercase mb-2">Status Asesmen</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="fas fa-check-circle text-muted"></i></span>
+                    <select name="status" class="form-select bg-light border-start-0">
+                        <option value="">Semua Status</option>
+                        <option value="selesai" {{ request('status') == 'selesai' ? 'selected' : '' }}>Selesai Mengerjakan</option>
+                        <option value="belum" {{ request('status') == 'belum' ? 'selected' : '' }}>Belum Mengerjakan</option>
+                    </select>
+                </div>
             </div>
-            <div class="col-md-4">
-                <label class="form-label">Batch Asesmen</label>
-                <select name="batch_id" class="form-select">
-                    @foreach($batches as $batch)
-                        <option value="{{ $batch->id }}" {{ $selectedBatchId == $batch->id ? 'selected' : '' }}>
-                            {{ $batch->batch_name }}{{ $batch->is_active ? ' (Aktif)' : '' }}
-                        </option>
-                    @endforeach
-                </select>
+            <div class="col-lg-3 col-md-6">
+                <label class="form-label fw-bold text-muted small uppercase mb-2">Batch Asesmen</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="fas fa-layer-group text-muted"></i></span>
+                    <select name="batch_id" class="form-select bg-light border-start-0">
+                        @foreach($batches as $batch)
+                            <option value="{{ $batch->id }}" {{ $selectedBatchId == $batch->id ? 'selected' : '' }}>
+                                {{ $batch->batch_name }}{{ $batch->is_active ? ' (Aktif)' : '' }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
             </div>
-            <div class="col-md-4">
-                <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Terapkan Filter</button>
-                <a href="{{ route('admin.results') }}" class="btn btn-outline-secondary">Reset</a>
+            <div class="col-lg-3 col-md-6 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-premium flex-grow-1"><i class="fas fa-filter me-2"></i> Filter</button>
+                <a href="{{ route('admin.results') }}" class="btn btn-light border p-2 px-3" title="Reset"><i class="fas fa-sync-alt"></i></a>
             </div>
         </form>
     </div>
@@ -230,29 +189,31 @@
         </div>
     @endif
 
-    <div class="card shadow-sm border-0">
-        <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
-            <h5 class="mb-0"><i class="fas fa-chart-table"></i> Hasil Assessment Siswa - {{ $selectedBatch ? $selectedBatch->batch_name : 'Tanpa Batch' }}</h5>
-            <a href="{{ route('admin.export', request()->only(['class_id', 'status', 'batch_id'])) }}" class="btn btn-success btn-sm">
-                <i class="fas fa-download"></i> Export Excel
+    <div class="table-card">
+        <div class="card-header bg-white border-bottom py-4 px-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <h5 class="mb-1 fw-bold text-dark"><i class="fas fa-users-cog me-2 text-primary"></i> Data Hasil Asesmen</h5>
+                <p class="text-muted small mb-0">Menampilkan data siswa untuk <strong>{{ $selectedBatch ? $selectedBatch->batch_name : 'Semua Batch' }}</strong></p>
+            </div>
+            <a href="{{ route('admin.export', request()->only(['class_id', 'status', 'batch_id'])) }}" class="btn btn-success btn-premium-sm px-4">
+                <i class="fas fa-file-excel me-2"></i> Export ke Excel
             </a>
         </div>
         <div class="table-responsive">
-            <table class="table table-hover mb-0 align-middle">
-                <thead class="table-light">
+            <table class="table table-hover mb-0 detail-table">
+                <thead>
                     <tr>
-                        <th>No</th>
-                        <th>Batch</th>
+                        <th class="text-center" style="width: 60px;">No</th>
+                        <th>Siswa</th>
                         <th>Kelas</th>
-                        <th>Nama Lengkap</th>
                         @if($isBatchTwoView)
-                            <th>Bidang Acuan Batch 1</th>
-                            <th>Peringkat Batch 2</th>
+                            <th>Acuan B1</th>
+                            <th>Rank B2</th>
                         @endif
                         <th>Status</th>
-                        <th>Rekomendasi Industri</th>
-                        <th>Skor</th>
-                        <th>Aksi</th>
+                        <th>Rekomendasi</th>
+                        <th class="text-center">Skor</th>
+                        <th class="text-center">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -263,73 +224,66 @@
                         $industry = $recommendation ? $recommendation->industry : null;
                         $rowBatch = $submission && $submission->batch ? $submission->batch : $selectedBatch;
                         $batchBadgeClass = 'badge-batch-default';
-                        $classNameNormalized = strtolower(trim((string) optional($student->studentClass)->class_name));
-                        $classBadgeClass = match ($classNameNormalized) {
-                            '11 pplg 1' => 'badge-soft-class-pplg1',
-                            '11 pplg 2' => 'badge-soft-class-pplg2',
-                            '11 pplg 3' => 'badge-soft-class-pplg3',
-                            default => 'badge-soft-class',
-                        };
-
+                        
                         if ($rowBatch) {
                             $batchTone = (($rowBatch->id - 1) % 4) + 1;
                             $batchBadgeClass = 'badge-batch-tone-' . $batchTone;
                         }
+
+                        $initials = collect(explode(' ', $student->full_name))->map(fn($n) => strtoupper(substr($n, 0, 1)))->take(2)->implode('');
                     @endphp
                     <tr>
-                        <td>{{ $index + 1 }}</td>
+                        <td class="text-center text-muted fw-bold">{{ $index + 1 }}</td>
                         <td>
-                            @if($rowBatch)
-                                <span class="badge-soft {{ $batchBadgeClass }}">{{ $rowBatch->batch_name }}</span>
-                            @else
-                                <span class="text-muted">-</span>
-                            @endif
+                            <div class="d-flex align-items-center">
+                                <div class="student-avatar me-3 {{ $batchBadgeClass }} bg-opacity-10 border border-current">
+                                    {{ $initials }}
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark">{{ $student->full_name }}</div>
+                                    <div class="text-muted small"><span class="badge-soft {{ $batchBadgeClass }} py-0 px-1" style="font-size: 0.6rem;">{{ $rowBatch->batch_name ?? '-' }}</span></div>
+                                </div>
+                            </div>
                         </td>
-                        <td><span class="badge-soft {{ $classBadgeClass }}">{{ $student->studentClass->class_name }}</span></td>
-                        <td>{{ $student->full_name }}</td>
+                        <td><span class="badge-soft badge-soft-class">{{ $student->studentClass->class_name }}</span></td>
                         @if($isBatchTwoView)
                             <td>
                                 @if($student->batch_one_recommendation_field)
                                     <span class="badge-soft badge-soft-competency">{{ $student->batch_one_recommendation_field }}</span>
                                 @else
-                                    <span class="text-muted">Belum ada hasil Batch 1</span>
+                                    <span class="text-muted small">-</span>
                                 @endif
                             </td>
                             <td>
                                 @if($student->batch_two_rank)
-                                    <span class="badge-soft badge-soft-industry">#{{ $student->batch_two_rank }} / {{ $student->batch_two_rank_total }}</span>
-                                @elseif($submission)
-                                    <span class="text-muted">Tidak dapat diranking</span>
+                                    <span class="badge-soft badge-soft-industry">#{{ $student->batch_two_rank }} <small class="ms-1">/{{ $student->batch_two_rank_total }}</small></span>
                                 @else
-                                    <span class="text-muted">-</span>
+                                    <span class="text-muted small">-</span>
                                 @endif
                             </td>
                         @endif
                         <td>
                             @if($submission)
-                                <span class="badge-soft badge-soft-status-done">Selesai</span>
+                                <span class="badge-soft badge-soft-status-done"><i class="fas fa-check-circle"></i> Selesai</span>
                             @else
-                                <span class="badge-soft badge-soft-status-wait">Belum</span>
+                                <span class="badge-soft badge-soft-status-wait"><i class="fas fa-clock"></i> Belum</span>
                             @endif
                         </td>
                         <td>
                             @if($industry)
                                 <div class="d-flex flex-column gap-1">
-                                    <span class="badge-soft badge-soft-industry">{{ $industry->display_industry_name }}</span>
+                                    <span class="fw-bold text-dark" style="font-size: 0.85rem;">{{ $industry->display_industry_name }}</span>
                                     <div class="d-flex flex-wrap gap-1">
                                         @if($student->recommendation_primary_label)
-                                            <span class="badge-soft badge-soft-competency">{{ $student->recommendation_primary_label }}</span>
-                                        @endif
-                                        @if($student->recommendation_secondary_label && $student->recommendation_secondary_label !== $student->recommendation_primary_label)
-                                            <span class="badge-soft badge-soft-competency-alt">{{ $student->recommendation_secondary_label }}</span>
+                                            <span class="badge-soft badge-soft-competency" style="padding: 0.1rem 0.4rem; font-size: 0.6rem;">{{ $student->recommendation_primary_label }}</span>
                                         @endif
                                     </div>
                                 </div>
                             @else
-                                <span class="text-muted">-</span>
+                                <span class="text-muted small">Belum ada hasil</span>
                             @endif
                         </td>
-                        <td>
+                        <td class="text-center">
                             @if($recommendation)
                                 <span class="score-text">{{ number_format($recommendation->score, 1) }}%</span>
                             @else
@@ -337,26 +291,30 @@
                             @endif
                         </td>
                         <td>
-                            @if($submission)
-                                <div class="action-wrap">
-                                    <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#resultModal{{ $submission->id }}">
-                                        <i class="fas fa-eye"></i> Lihat Hasil
+                            <div class="d-flex justify-content-center gap-2">
+                                @if($submission)
+                                    <button type="button" class="btn btn-sm btn-light border text-primary" data-bs-toggle="modal" data-bs-target="#resultModal{{ $submission->id }}" title="Lihat Detail">
+                                        <i class="fas fa-eye"></i>
                                     </button>
-
-                                    <form action="{{ route('admin.students.reset', $student->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus hasil asesmen siswa ini? Siswa ini harus mengulang kembali ujiannya dari awal.');">
+                                    <form action="{{ route('admin.students.reset', $student->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Reset hasil asesmen ini?');">
                                         @csrf
                                         <input type="hidden" name="batch_id" value="{{ $selectedBatchId }}">
-                                        <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-undo"></i> Reset Hasil</button>
+                                        <button type="submit" class="btn btn-sm btn-light border text-danger" title="Reset Hasil">
+                                            <i class="fas fa-undo"></i>
+                                        </button>
                                     </form>
-                                </div>
-                            @else
-                                <span class="text-muted">-</span>
-                            @endif
+                                @else
+                                    <span class="text-muted small">-</span>
+                                @endif
+                            </div>
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="{{ $isBatchTwoView ? 10 : 8 }}" class="text-center py-4">Belum ada data</td>
+                        <td colspan="{{ $isBatchTwoView ? 10 : 8 }}" class="text-center py-5 text-muted">
+                            <i class="fas fa-search d-block mb-3 fs-1 opacity-25"></i>
+                            Tidak ada data siswa yang ditemukan.
+                        </td>
                     </tr>
                     @endforelse
                 </tbody>
@@ -384,61 +342,61 @@
                         </div>
 
                         <div class="modal-body">
-                            <div class="row g-2 mb-3">
+                            <div class="row g-3 mb-4">
                                 <div class="col-md-4">
                                     <div class="result-meta-card">
-                                        <small class="text-muted d-block">Nama Siswa</small>
-                                        <strong>{{ $student->full_name }}</strong>
+                                        <div class="text-muted small uppercase fw-bold mb-1">Nama Siswa</div>
+                                        <div class="fw-bold text-dark">{{ $student->full_name }}</div>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="result-meta-card">
-                                        <small class="text-muted d-block">Kelas</small>
-                                        <strong>{{ $student->studentClass->class_name }}</strong>
+                                        <div class="text-muted small uppercase fw-bold mb-1">Kelas</div>
+                                        <div class="fw-bold text-dark">{{ $student->studentClass->class_name }}</div>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="result-meta-card">
-                                        <small class="text-muted d-block">Batch</small>
-                                        <strong>{{ optional($submission->batch)->batch_name ?? '-' }}</strong>
+                                        <div class="text-muted small uppercase fw-bold mb-1">Batch</div>
+                                        <div class="fw-bold text-dark">{{ optional($submission->batch)->batch_name ?? '-' }}</div>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="result-meta-card">
-                                        <small class="text-muted d-block">Status</small>
+                                        <div class="text-muted small uppercase fw-bold mb-1">Status</div>
                                         <span class="badge-soft badge-soft-status-done">Selesai</span>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="result-meta-card">
-                                        <small class="text-muted d-block">Skor Rekomendasi</small>
-                                        <strong class="score-text">{{ $recommendation ? number_format($recommendation->score, 1) . '%' : '-' }}</strong>
+                                        <div class="text-muted small uppercase fw-bold mb-1">Skor Rekomendasi</div>
+                                        <div class="score-text">{{ $recommendation ? number_format($recommendation->score, 1) . '%' : '-' }}</div>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="result-meta-card">
-                                        <small class="text-muted d-block">Tanggal Submit</small>
-                                        <strong>{{ optional($submission->submitted_at)->format('d/m/Y H:i') ?? '-' }}</strong>
+                                        <div class="text-muted small uppercase fw-bold mb-1">Tanggal Submit</div>
+                                        <div class="fw-bold text-dark small">{{ optional($submission->submitted_at)->format('d M Y, H:i') ?? '-' }}</div>
                                     </div>
                                 </div>
 
                                 @if($isBatchTwoView)
-                                    <div class="col-md-4">
+                                    <div class="col-md-6">
                                         <div class="result-meta-card">
-                                            <small class="text-muted d-block">Bidang Acuan Batch 1</small>
-                                            <strong>{{ $student->batch_one_recommendation_field ?? '-' }}</strong>
+                                            <div class="text-muted small uppercase fw-bold mb-1">Bidang Acuan Batch 1</div>
+                                            <div class="fw-bold text-dark">{{ $student->batch_one_recommendation_field ?? '-' }}</div>
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-6">
                                         <div class="result-meta-card">
-                                            <small class="text-muted d-block">Peringkat Batch 2</small>
-                                            <strong>
+                                            <div class="text-muted small uppercase fw-bold mb-1">Peringkat Batch 2</div>
+                                            <div class="fw-bold text-dark">
                                                 @if($student->batch_two_rank)
-                                                    #{{ $student->batch_two_rank }} / {{ $student->batch_two_rank_total }}
+                                                    <span class="badge-soft badge-soft-industry">#{{ $student->batch_two_rank }} <small class="ms-1">/{{ $student->batch_two_rank_total }}</small></span>
                                                 @else
                                                     -
                                                 @endif
-                                            </strong>
+                                            </div>
                                         </div>
                                     </div>
                                 @endif
