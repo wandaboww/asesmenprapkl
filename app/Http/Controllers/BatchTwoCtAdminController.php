@@ -15,6 +15,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 class BatchTwoCtAdminController extends Controller
 {
     private const CT_TYPES = [
+        '-',
         'Decomposition',
         'Pattern Recognition',
         'Abstraction',
@@ -30,7 +31,7 @@ class BatchTwoCtAdminController extends Controller
 
         $questionQuery = BatchTwoCtQuestion::with(['options' => function ($query) {
             $query->orderBy('label_opsi');
-        }])->orderByDesc('id');
+        }])->orderBy('id');
 
         if ($selectedJenisCt) {
             $questionQuery->where('jenis_ct', $selectedJenisCt);
@@ -103,6 +104,16 @@ class BatchTwoCtAdminController extends Controller
             'options.*.bobot_marketing' => ['required', 'integer', 'min:0', 'max:4'],
             'options.*.bobot_admin' => ['required', 'integer', 'min:0', 'max:4'],
         ]);
+
+        $exists = BatchTwoCtQuestion::where('jenis_ct', $validated['jenis_ct'])
+            ->where('narasi_soal', $validated['narasi_soal'])
+            ->exists();
+
+        if ($exists) {
+            throw ValidationException::withMessages([
+                'narasi_soal' => 'Soal dengan narasi dan jenis yang sama sudah terdaftar di sistem.',
+            ]);
+        }
 
         $options = $this->normalizeOptions($validated['options']);
         $this->validateOptionDominance($options);
@@ -183,9 +194,48 @@ class BatchTwoCtAdminController extends Controller
             $query->orderBy('label_opsi');
         }])->orderBy('id')->get();
 
+        if ($questions->isEmpty()) {
+            $questions = collect([
+                (object) [
+                    'jenis_ct' => 'Decomposition',
+                    'narasi_soal' => 'Contoh 1: Sebuah sistem e-commerce memiliki fitur keranjang belanja. Bagaimana cara memecah masalah besar ini menjadi bagian-bagian kecil?',
+                    'level_kesulitan' => 'medium',
+                    'is_active' => true,
+                    'options' => collect([
+                        (object) ['label_opsi' => 'A', 'teks_opsi' => 'Membuat database produk', 'bobot_web' => 4, 'bobot_marketing' => 0, 'bobot_admin' => 2],
+                        (object) ['label_opsi' => 'B', 'teks_opsi' => 'Merancang alur checkout', 'bobot_web' => 2, 'bobot_marketing' => 0, 'bobot_admin' => 4],
+                        (object) ['label_opsi' => 'C', 'teks_opsi' => 'Mempromosikan fitur keranjang', 'bobot_web' => 0, 'bobot_marketing' => 4, 'bobot_admin' => 0],
+                    ])
+                ],
+                (object) [
+                    'jenis_ct' => 'Pattern Recognition',
+                    'narasi_soal' => 'Contoh 2: Setelah menganalisis data penjualan selama 3 tahun, Anda menemukan bahwa penjualan jas hujan selalu meningkat di bulan Oktober. Apa langkah selanjutnya?',
+                    'level_kesulitan' => 'medium',
+                    'is_active' => true,
+                    'options' => collect([
+                        (object) ['label_opsi' => 'A', 'teks_opsi' => 'Menyiapkan stok lebih banyak di bulan September', 'bobot_web' => 0, 'bobot_marketing' => 4, 'bobot_admin' => 2],
+                        (object) ['label_opsi' => 'B', 'teks_opsi' => 'Mengabaikan data karena hujan tidak pasti', 'bobot_web' => 0, 'bobot_marketing' => 0, 'bobot_admin' => 1],
+                        (object) ['label_opsi' => 'C', 'teks_opsi' => 'Membuat promo diskon jas hujan di bulan Januari', 'bobot_web' => 0, 'bobot_marketing' => 2, 'bobot_admin' => 0],
+                    ])
+                ],
+                (object) [
+                    'jenis_ct' => 'Abstraction',
+                    'narasi_soal' => 'Contoh 3: Anda ingin membuat aplikasi peta digital. Informasi apa yang paling penting untuk ditampilkan kepada pengguna?',
+                    'level_kesulitan' => 'medium',
+                    'is_active' => true,
+                    'options' => collect([
+                        (object) ['label_opsi' => 'A', 'teks_opsi' => 'Nama jalan dan arah lalu lintas', 'bobot_web' => 4, 'bobot_marketing' => 0, 'bobot_admin' => 0],
+                        (object) ['label_opsi' => 'B', 'teks_opsi' => 'Warna cat rumah di pinggir jalan', 'bobot_web' => 0, 'bobot_marketing' => 0, 'bobot_admin' => 1],
+                        (object) ['label_opsi' => 'C', 'teks_opsi' => 'Jumlah pohon di setiap trotoar', 'bobot_web' => 0, 'bobot_marketing' => 0, 'bobot_admin' => 2],
+                    ])
+                ],
+            ]);
+        }
+
+
         $payload = [
             'generated_at' => now()->toDateTimeString(),
-            'questions' => $questions->map(function (BatchTwoCtQuestion $question) {
+            'questions' => $questions->map(function ($question) {
                 return [
                     'jenis_ct' => $question->jenis_ct,
                     'narasi_soal' => $question->narasi_soal,
@@ -293,7 +343,8 @@ class BatchTwoCtAdminController extends Controller
         ];
 
         foreach ($headers as $index => $header) {
-            $sheet->setCellValueByColumnAndRow($index + 1, 1, $header);
+            $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($index + 1);
+            $sheet->setCellValue($col . '1', $header);
         }
 
         $row = 2;
@@ -301,20 +352,69 @@ class BatchTwoCtAdminController extends Controller
             $query->orderBy('label_opsi');
         }])->orderBy('id')->get();
 
-        foreach ($questions as $question) {
-            foreach ($question->options as $option) {
-                $sheet->setCellValueByColumnAndRow(1, $row, $question->jenis_ct);
-                $sheet->setCellValueByColumnAndRow(2, $row, $question->narasi_soal);
-                $sheet->setCellValueByColumnAndRow(3, $row, $question->level_kesulitan);
-                $sheet->setCellValueByColumnAndRow(4, $row, $option->label_opsi);
-                $sheet->setCellValueByColumnAndRow(5, $row, $option->teks_opsi);
-                $sheet->setCellValueByColumnAndRow(6, $row, (int) $option->bobot_web);
-                $sheet->setCellValueByColumnAndRow(7, $row, (int) $option->bobot_marketing);
-                $sheet->setCellValueByColumnAndRow(8, $row, (int) $option->bobot_admin);
-                $sheet->setCellValueByColumnAndRow(9, $row, $question->is_active ? 1 : 0);
-                $row++;
+        if ($questions->isEmpty()) {
+            // Add 3 example questions to the spreadsheet
+            $examples = [
+                [
+                    'jenis' => 'Decomposition',
+                    'narasi' => 'Contoh 1: Sebuah sistem e-commerce memiliki fitur keranjang belanja. Bagaimana cara memecah masalah besar ini menjadi bagian-bagian kecil?',
+                    'options' => [
+                        ['A', 'Membuat database produk', 4, 0, 2],
+                        ['B', 'Merancang alur checkout', 2, 0, 4],
+                        ['C', 'Mempromosikan fitur keranjang', 0, 4, 0],
+                    ]
+                ],
+                [
+                    'jenis' => 'Pattern Recognition',
+                    'narasi' => 'Contoh 2: Setelah menganalisis data penjualan selama 3 tahun, Anda menemukan bahwa penjualan jas hujan selalu meningkat di bulan Oktober. Apa langkah selanjutnya?',
+                    'options' => [
+                        ['A', 'Menyiapkan stok lebih banyak di bulan September', 0, 4, 2],
+                        ['B', 'Mengabaikan data karena hujan tidak pasti', 0, 0, 1],
+                        ['C', 'Membuat promo diskon jas hujan di bulan Januari', 0, 2, 0],
+                    ]
+                ],
+                [
+                    'jenis' => 'Abstraction',
+                    'narasi' => 'Contoh 3: Anda ingin membuat aplikasi peta digital. Informasi apa yang paling penting untuk ditampilkan kepada pengguna?',
+                    'options' => [
+                        ['A', 'Nama jalan dan arah lalu lintas', 4, 0, 0],
+                        ['B', 'Warna cat rumah di pinggir jalan', 0, 0, 1],
+                        ['C', 'Jumlah pohon di setiap trotoar', 0, 0, 2],
+                    ]
+                ],
+            ];
+
+            foreach ($examples as $ex) {
+                foreach ($ex['options'] as $opt) {
+                    $sheet->setCellValue('A' . $row, $ex['jenis']);
+                    $sheet->setCellValue('B' . $row, $ex['narasi']);
+                    $sheet->setCellValue('C' . $row, 'medium');
+                    $sheet->setCellValue('D' . $row, $opt[0]);
+                    $sheet->setCellValue('E' . $row, $opt[1]);
+                    $sheet->setCellValue('F' . $row, $opt[2]);
+                    $sheet->setCellValue('G' . $row, $opt[3]);
+                    $sheet->setCellValue('H' . $row, $opt[4]);
+                    $sheet->setCellValue('I' . $row, 1);
+                    $row++;
+                }
+            }
+        } else {
+            foreach ($questions as $question) {
+                foreach ($question->options as $option) {
+                    $sheet->setCellValue('A' . $row, $question->jenis_ct);
+                    $sheet->setCellValue('B' . $row, $question->narasi_soal);
+                    $sheet->setCellValue('C' . $row, $question->level_kesulitan);
+                    $sheet->setCellValue('D' . $row, $option->label_opsi);
+                    $sheet->setCellValue('E' . $row, $option->teks_opsi);
+                    $sheet->setCellValue('F' . $row, (int) $option->bobot_web);
+                    $sheet->setCellValue('G' . $row, (int) $option->bobot_marketing);
+                    $sheet->setCellValue('H' . $row, (int) $option->bobot_admin);
+                    $sheet->setCellValue('I' . $row, $question->is_active ? 1 : 0);
+                    $row++;
+                }
             }
         }
+
 
         $fileName = 'batch2_ct_questions_' . date('Ymd_His') . '.xlsx';
 
@@ -331,6 +431,8 @@ class BatchTwoCtAdminController extends Controller
         $request->validate([
             'excel_file' => ['required', 'file', 'mimes:xlsx'],
         ]);
+
+        set_time_limit(0); // Allow processing many questions without timeout
 
         if (!class_exists(\ZipArchive::class)) {
             return back()->with('error', 'Ekstensi ZIP belum aktif, import Excel belum dapat dijalankan.');
@@ -379,9 +481,20 @@ class BatchTwoCtAdminController extends Controller
 
         $processedQuestions = 0;
         $processedOptions = 0;
+        $duplicateQuestions = 0;
 
-        DB::transaction(function () use ($grouped, &$processedQuestions, &$processedOptions) {
+        DB::transaction(function () use ($grouped, &$processedQuestions, &$processedOptions, &$duplicateQuestions) {
             foreach ($grouped as $item) {
+                // Check for duplicates in DB
+                $exists = BatchTwoCtQuestion::where('jenis_ct', $item['jenis_ct'])
+                    ->where('narasi_soal', $item['narasi_soal'])
+                    ->exists();
+
+                if ($exists) {
+                    $duplicateQuestions++;
+                    continue;
+                }
+
                 $options = $this->normalizeOptions($item['options']);
                 if (count($options) < 3) {
                     continue;
@@ -405,7 +518,12 @@ class BatchTwoCtAdminController extends Controller
             }
         });
 
-        return back()->with('success', 'Import Excel selesai. Soal: ' . $processedQuestions . ', opsi: ' . $processedOptions . '.');
+        $msg = 'Import Excel selesai. Soal: ' . $processedQuestions . ', opsi: ' . $processedOptions . '.';
+        if ($duplicateQuestions > 0) {
+            $msg .= ' (Serta ' . $duplicateQuestions . ' soal dilewati karena sudah ada/duplikat).';
+        }
+
+        return back()->with('success', $msg);
     }
 
     private function normalizeOptions(array $rawOptions): array
