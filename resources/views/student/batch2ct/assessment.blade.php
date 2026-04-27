@@ -16,6 +16,37 @@
     .answer-option:hover { border-color: #2563eb; background: #eff6ff; }
     .answer-option.selected { border-color: #2563eb; background: #dbeafe; }
     .ct-badge { border-radius: 999px; padding: 0.3rem 0.7rem; font-size: 0.74rem; font-weight: 700; background: #e2e8f0; color: #1e293b; }
+
+    /* Progress Bar Styles */
+    .sticky-progress {
+        position: -webkit-sticky;
+        position: sticky;
+        top: 56px; /* Bootstrap navbar height */
+        z-index: 1020;
+        background: white;
+        padding: 15px 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        border-bottom: 1px solid #dee2e6;
+        margin-bottom: 25px;
+    }
+    .progress {
+        height: 12px;
+        border-radius: 10px;
+        background-color: #e2e8f0;
+    }
+    .progress-bar {
+        background: linear-gradient(90deg, #0f172a 0%, #1d4ed8 100%);
+        transition: width 0.4s ease;
+    }
+    .progress-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: #334155;
+    }
 </style>
 @endsection
 
@@ -41,7 +72,24 @@
     </div>
 </nav>
 
-<div class="container mt-4 mb-5">
+<!-- Sticky Progress Bar -->
+<div class="sticky-progress">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="progress-info">
+                    <span><i class="fas fa-tasks me-1"></i> Progress Pengerjaan</span>
+                    <span id="progress-text">0% (0/0)</span>
+                </div>
+                <div class="progress">
+                    <div id="main-progress-bar" class="progress-bar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mt-2 mb-5">
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
@@ -115,7 +163,6 @@
                                             <label for="q{{ $question->id }}_o{{ $option->id }}" class="mb-0 w-100" style="cursor:pointer;">
                                                 <strong>{{ $option->label_opsi }}</strong>. {{ $option->teks_opsi }}
                                             </label>
-                                            <small class="d-block mt-2 text-muted">Bobot: W {{ $option->bobot_web }} | M {{ $option->bobot_marketing }} | A {{ $option->bobot_admin }}</small>
                                         </div>
                                     </div>
                                 @endforeach
@@ -138,6 +185,39 @@
 
 @section('scripts')
 <script>
+    function updateProgress() {
+        const radioButtons = document.querySelectorAll('input[type="radio"]');
+        const groups = new Set();
+        radioButtons.forEach(rb => groups.add(rb.name));
+        
+        const totalQuestions = groups.size;
+        let answeredQuestions = 0;
+        groups.forEach(groupName => {
+            if (document.querySelector(`input[name="${groupName}"]:checked`)) {
+                answeredQuestions++;
+            }
+        });
+        
+        const percentage = totalQuestions > 0 ? Math.round((answeredQuestions / totalQuestions) * 100) : 0;
+        
+        const progressBar = document.getElementById('main-progress-bar');
+        const progressText = document.getElementById('progress-text');
+        
+        progressBar.style.width = percentage + '%';
+        progressBar.setAttribute('aria-valuenow', percentage);
+        progressText.innerText = `${percentage}% (${answeredQuestions}/${totalQuestions})`;
+        
+        if (percentage === 100) {
+            progressBar.classList.add('bg-success');
+        } else {
+            progressBar.classList.remove('bg-success');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        updateProgress();
+    });
+
     document.querySelectorAll('.answer-option').forEach((optionEl) => {
         optionEl.addEventListener('click', function () {
             const questionId = this.dataset.question;
@@ -151,6 +231,7 @@
             const radio = document.querySelector(`input[name="q_${questionId}"][value="${optionId}"]`);
             if (radio) {
                 radio.checked = true;
+                updateProgress();
             }
         });
     });

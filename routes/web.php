@@ -54,11 +54,22 @@ Route::middleware('admin')->prefix('admin')->group(function () {
     Route::post('/students/{id}/reset-assessment', [AdminController::class, 'resetAssessment'])->name('admin.students.reset');
     Route::delete('/students/{id}', [AdminController::class, 'deleteStudent'])->name('admin.students.delete');
 
-    Route::get('/batch2-ct', [BatchTwoCtAdminController::class, 'index'])->name('admin.batch2ct.index');
+    Route::get('/batch2-ct', function () {
+        return redirect()->route('admin.batch2ct.ringkasan');
+    });
+    Route::get('/batch2-ct/ringkasan', [BatchTwoCtAdminController::class, 'index'])->name('admin.batch2ct.ringkasan');
+    Route::get('/batch2-ct/ranking', [BatchTwoCtAdminController::class, 'ranking'])->name('admin.batch2ct.ranking');
+    Route::get('/batch2-ct/ranking-lengkap', [BatchTwoCtAdminController::class, 'rankingLengkap'])->name('admin.batch2ct.ranking-lengkap');
+    Route::post('/batch2-ct/reset-result', [BatchTwoCtAdminController::class, 'resetResult'])->name('admin.batch2ct.reset-result');
+    Route::get('/batch2-ct/kelola-soal', [BatchTwoCtAdminController::class, 'kelolaSoal'])->name('admin.batch2ct.kelola-soal');
+    Route::get('/batch2-ct/bank-soal', [BatchTwoCtAdminController::class, 'bankSoal'])->name('admin.batch2ct.bank-soal');
+    
     Route::post('/batch2-ct/questions', [BatchTwoCtAdminController::class, 'store'])->name('admin.batch2ct.questions.store');
     Route::get('/batch2-ct/questions/{question}/edit', [BatchTwoCtAdminController::class, 'edit'])->name('admin.batch2ct.questions.edit');
     Route::put('/batch2-ct/questions/{question}', [BatchTwoCtAdminController::class, 'update'])->name('admin.batch2ct.questions.update');
     Route::delete('/batch2-ct/questions/{question}', [BatchTwoCtAdminController::class, 'destroy'])->name('admin.batch2ct.questions.delete');
+    Route::delete('/batch2-ct/questions-delete-all', [BatchTwoCtAdminController::class, 'destroyAll'])->name('admin.batch2ct.questions.delete-all');
+    
     Route::get('/batch2-ct/export/json', [BatchTwoCtAdminController::class, 'exportJson'])->name('admin.batch2ct.export.json');
     Route::post('/batch2-ct/import/json', [BatchTwoCtAdminController::class, 'importJson'])->name('admin.batch2ct.import.json');
     Route::get('/batch2-ct/export/excel', [BatchTwoCtAdminController::class, 'exportExcel'])->name('admin.batch2ct.export.excel');

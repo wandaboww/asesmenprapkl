@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 class StudentBatchTwoCtController extends Controller
 {
     private const CT_TYPES = [
+        '-',
         'Decomposition',
         'Pattern Recognition',
         'Abstraction',

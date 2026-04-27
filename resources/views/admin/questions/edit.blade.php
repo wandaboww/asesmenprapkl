@@ -1,69 +1,36 @@
-@extends('layouts.app')
+@extends('layouts.admin')
+
+@section('page_title', 'Edit Soal Assessment')
 
 @section('styles')
 <style>
-    body { background: #f4f6f9; }
-    .navbar { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); padding: 15px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-    .navbar-brand { font-weight: 700; font-size: 1.4rem; }
-    .nav-link { font-weight: 500; transition: 0.3s; }
-    .nav-link:hover { transform: translateY(-2px); color: #fff !important; }
-    .card { border-radius: 15px; border: none; box-shadow: 0 8px 25px rgba(0,0,0,0.06); }
+    .card { border-radius: 18px; border: none; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+    .card-header { background-color: #fff !important; border-bottom: 1px solid #f1f5f9 !important; padding: 20px !important; }
+    .card-header h5 { font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 10px; }
+    .card-header h5 i { color: var(--primary-color); }
 
     .option-row {
-        border: 1px solid #dee2e6;
-        border-radius: 10px;
-        padding: 12px;
-        margin-bottom: 10px;
-        background: #fafbfc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 15px;
+        background: #f8fafc;
+        transition: all 0.2s;
     }
 
-    @media (max-width: 768px) {
-        .navbar-collapse { padding-top: 15px; }
-        .admin-user-info {
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            width: 100%;
-            justify-content: space-between;
-        }
+    .option-row:hover {
+        border-color: var(--primary-color);
+        background: #fff;
     }
+
+    .form-label { font-weight: 600; color: #475569; font-size: 0.85rem; }
+    .form-control, .form-select { border-radius: 10px; padding: 10px 15px; border: 1px solid #e2e8f0; }
+    .form-control:focus, .form-select:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
 </style>
 @endsection
 
 @section('content')
-<nav class="navbar navbar-dark navbar-expand-lg">
-    <div class="container-fluid">
-        <span class="navbar-brand"><i class="fas fa-shield-alt"></i> Admin Panel</span>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav me-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('admin.dashboard') }}">Dashboard</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('admin.results') }}">Hasil Asesmen</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link active" href="{{ route('admin.questions') }}">Kelola Soal</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('admin.batch2ct.index') }}">Kelola Soal Batch 2 CT</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('admin.students') }}">Kelola Siswa</a>
-                </li>
-            </ul>
-            <div class="d-flex align-items-center admin-user-info">
-                <span class="text-white me-3"><strong><i class="fas fa-user-circle"></i> {{ session('admin_name') }}</strong></span>
-                <a href="{{ route('admin.logout') }}" class="btn btn-sm btn-outline-light"><i class="fas fa-sign-out-alt"></i> Logout</a>
-            </div>
-        </div>
-    </div>
-</nav>
-
-<div class="container-fluid mt-4 mb-5">
+<div class="container-fluid">
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif

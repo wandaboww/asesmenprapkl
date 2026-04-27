@@ -1,79 +1,289 @@
-@extends('layouts.app')
+@extends('layouts.admin')
+
+@section('page_title', 'Kelola Soal Batch 2 CT')
 
 @section('styles')
 <style>
-    body { background: #f4f6f9; }
-    .navbar { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); padding: 15px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-    .navbar-brand { font-weight: 700; font-size: 1.4rem; }
-    .nav-link { font-weight: 500; transition: 0.3s; }
-    .nav-link:hover { transform: translateY(-2px); color: #fff !important; }
-    .card { border-radius: 14px; border: none; box-shadow: 0 8px 24px rgba(0,0,0,0.06); }
-    .score-input { max-width: 90px; }
-    .chart-wrap { position: relative; height: 320px; }
-    .option-chip {
-        border: 1px solid #e2e8f0;
-        border-radius: 10px;
-        padding: 8px 10px;
-        margin-bottom: 6px;
-        background: #f8fafc;
-        font-size: 0.84rem;
+    .card-stat {
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+        position: relative;
+        background: #fff;
     }
+
+    .card-stat:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    }
+
+    .card-stat .card-body {
+        position: relative;
+        z-index: 2;
+        padding: 30px;
+    }
+
+    .card-stat .icon-box {
+        width: 60px;
+        height: 60px;
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+
+    .card-stat h6 {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .card-stat h3 {
+        font-size: 2.2rem;
+        font-weight: 800;
+        margin-bottom: 0;
+        color: var(--text-main);
+    }
+
+    .chart-panel {
+        border-radius: 24px;
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        background: #fff;
+        padding: 30px;
+        height: 100%;
+        box-shadow: 0 4px 25px rgba(0,0,0,0.03);
+    }
+
+    .chart-canvas-wrap {
+        position: relative;
+        height: 300px;
+        width: 100%;
+    }
+
+    .table-card {
+        border-radius: 24px;
+        border: none;
+        box-shadow: 0 4px 25px rgba(0,0,0,0.03);
+        background: #fff;
+        overflow: hidden;
+    }
+
+    .option-chip {
+        border: 1px solid #f1f5f9;
+        border-radius: 12px;
+        padding: 12px 18px;
+        margin-bottom: 10px;
+        background: #f8fafc;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+    }
+
+    .option-chip:hover {
+        border-color: var(--primary-color);
+        background: #fff;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
     .legend-dot {
         display: inline-block;
         width: 10px;
         height: 10px;
         border-radius: 50%;
-        margin-right: 5px;
+        margin-right: 6px;
     }
 
-    @media (max-width: 768px) {
-        .navbar-collapse { padding-top: 15px; }
-        .admin-user-info {
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            width: 100%;
-            justify-content: space-between;
-        }
-        .chart-wrap { height: 260px; }
+    .chart-empty-overlay {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        width: 100%;
+        z-index: 10;
+        pointer-events: none;
     }
+
+    .chart-empty-overlay i {
+        font-size: 2.5rem;
+        color: #cbd5e1;
+        margin-bottom: 10px;
+        display: block;
+    }
+
+    .chart-empty-overlay span {
+        font-size: 0.85rem;
+        color: #94a3b8;
+        font-weight: 600;
+    }
+
+
+    .badge-soft {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 10px;
+        padding: 0.5rem 1rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    .bg-indigo-soft { background-color: #eef2ff; }
+    .bg-success-soft { background-color: #f0fdf4; }
+    .bg-danger-soft { background-color: #fef2f2; }
+
+    .rank-badge {
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        font-size: 0.75rem;
+        font-weight: 800;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .rank-1 { background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); color: #fff; }
+    .rank-2 { background: linear-gradient(135deg, #94a3b8 0%, #475569 100%); color: #fff; }
+    .rank-3 { background: linear-gradient(135deg, #d97706 0%, #92400e 100%); color: #fff; }
+
+
+    .instruction-card {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        color: #ffffff;
+        border-radius: 24px;
+        padding: 35px;
+        border: none;
+        margin-bottom: 30px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 15px 35px rgba(79, 70, 229, 0.2);
+    }
+
+    .instruction-card .guide-title {
+        color: #ffffff;
+        font-weight: 800;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .instruction-card .guide-text {
+        color: rgba(255, 255, 255, 0.95);
+        font-size: 1rem;
+        line-height: 1.6;
+    }
+
+    .instruction-card ul {
+        list-style: none;
+        padding-left: 0;
+    }
+
+    .instruction-card ul li {
+        position: relative;
+        padding-left: 28px;
+        margin-bottom: 12px;
+        color: #ffffff;
+        font-weight: 500;
+    }
+
+    .instruction-card ul li::before {
+        content: '\f058';
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 900;
+        position: absolute;
+        left: 0;
+        top: 2px;
+        color: #10b981;
+        background: white;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-size: 1.1rem;
+    }
+    
+    .btn-white-glass {
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        transition: all 0.3s;
+    }
+
+    .btn-white-glass:hover {
+        background: white;
+        color: #4f46e5;
+        transform: translateY(-2px);
+    }
+
+
+    .metric-table th {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #64748b;
+        background: #f8fafc;
+        padding: 12px 15px !important;
+    }
+
+    .metric-table td {
+        padding: 12px 15px !important;
+        vertical-align: middle;
+    }
+
+    .score-input {
+        border-radius: 10px;
+        text-align: center;
+        font-weight: 700;
+        border: 1px solid #e2e8f0;
+    }
+
+    .form-section-title {
+        font-weight: 800;
+        color: #1e293b;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .table-scroll-container {
+        max-height: 800px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--primary-color) #f1f5f9;
+    }
+
+    .table-scroll-container::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .table-scroll-container::-webkit-scrollbar-track {
+        background: #f1f5f9;
+    }
+
+    .table-scroll-container::-webkit-scrollbar-thumb {
+        background-color: var(--primary-color);
+        border-radius: 20px;
+    }
+
+    .table-scroll-container thead {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: #fff;
+    }
+
+
 </style>
 @endsection
 
 @section('content')
-<nav class="navbar navbar-dark navbar-expand-lg">
-    <div class="container-fluid">
-        <span class="navbar-brand"><i class="fas fa-shield-alt"></i> Admin Panel</span>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav me-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('admin.dashboard') }}">Dashboard</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('admin.results') }}">Hasil Asesmen</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('admin.questions') }}">Kelola Soal Batch 1</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link active" href="{{ route('admin.batch2ct.index') }}">Kelola Soal Batch 2 CT</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('admin.students') }}">Kelola Siswa</a>
-                </li>
-            </ul>
-            <div class="d-flex align-items-center admin-user-info">
-                <span class="text-white me-3"><strong><i class="fas fa-user-circle"></i> {{ session('admin_name') }}</strong></span>
-                <a href="{{ route('admin.logout') }}" class="btn btn-sm btn-outline-light"><i class="fas fa-sign-out-alt"></i> Logout</a>
-            </div>
-        </div>
-    </div>
-</nav>
-
-<div class="container-fluid mt-4 mb-5">
+<div class="container-fluid">
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
@@ -92,281 +302,396 @@
         </div>
     @endif
 
-    <div class="row mb-4">
-        <div class="col-md-3 mb-3">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <small>Total Soal CT</small>
-                    <h3 class="mb-0">{{ $dashboardSummary['total_questions'] }}</h3>
-                </div>
+    <div class="instruction-card">
+        <div class="row align-items-center">
+            <div class="col-md-9">
+                <h4 class="guide-title mb-3"><i class="fas fa-info-circle me-2"></i> Panduan Pengelolaan Soal Batch 2 (CT)</h4>
+                <p class="guide-text mb-4">Soal Batch 2 menggunakan metode <strong>Weighted Scoring</strong> untuk memetakan minat siswa ke 3 bidang utama: <strong>Web Programming (W)</strong>, <strong>Digital Marketing (M)</strong>, dan <strong>Administratif (A)</strong>.</p>
+                <ul class="mb-0">
+                    <li>Setiap opsi jawaban wajib memiliki bobot skor (0-4) pada satu atau lebih bidang.</li>
+                    <li>Siswa akan direkomendasikan ke bidang dengan akumulasi skor tertinggi di akhir tes.</li>
+                    <li>Gunakan level kesulitan untuk menyeimbangkan variasi soal Computational Thinking.</li>
+                </ul>
+            </div>
+            <div class="col-md-3 text-md-end mt-4 mt-md-0">
+                <button class="btn btn-white-glass rounded-pill px-4 py-2 fw-bold" data-bs-toggle="collapse" data-bs-target="#ctGuideDetails">
+                    <i class="fas fa-chevron-down me-2"></i> Detail Import
+                </button>
             </div>
         </div>
-        <div class="col-md-3 mb-3">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <small>Soal Aktif</small>
-                    <h3 class="mb-0">{{ $dashboardSummary['active_questions'] }}</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card bg-info text-white">
-                <div class="card-body">
-                    <small>Siswa Tervalidasi</small>
-                    <h3 class="mb-0">{{ $dashboardSummary['evaluated_students'] }}</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card bg-warning text-dark">
-                <div class="card-body">
-                    <small>Rata-rata Skor Total</small>
-                    <h6 class="mb-0">W {{ number_format($dashboardSummary['avg_web'], 1) }} | M {{ number_format($dashboardSummary['avg_marketing'], 1) }} | A {{ number_format($dashboardSummary['avg_admin'], 1) }}</h6>
-                </div>
+        <div class="collapse mt-4" id="ctGuideDetails">
+            <div class="p-4 bg-white bg-opacity-10 rounded-4 border border-white border-opacity-20">
+                <p class="small mb-2 fw-bold text-white"><i class="fas fa-file-excel me-2"></i> Tips Import Data:</p>
+                <p class="small mb-0 text-white opacity-90">Pastikan file Excel mengikuti format yang disediakan. Bobot skor harus berupa angka bulat antara 0 sampai 4. Anda dapat mengunduh contoh format melalui tombol Export di bawah untuk dijadikan referensi.</p>
             </div>
         </div>
     </div>
 
-    <div class="row g-3 mb-4">
-        <div class="col-lg-6">
-            <div class="card">
-                <div class="card-header bg-white border-bottom py-3">
-                    <h6 class="mb-0"><i class="fas fa-chart-column"></i> Rata-rata Skor W-M-A</h6>
-                </div>
+    <div class="row mb-5">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card card-stat">
                 <div class="card-body">
-                    <div class="chart-wrap">
-                        <canvas id="avgScoreChart"></canvas>
+                    <div class="icon-box" style="background: #eef2ff; color: #4f46e5;">
+                        <i class="fas fa-layer-group"></i>
+                    </div>
+                    <h6>Total Soal CT</h6>
+                    <h3>{{ $dashboardSummary['total_questions'] }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card card-stat">
+                <div class="card-body">
+                    <div class="icon-box" style="background: #ecfdf5; color: #10b981;">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <h6>Soal Aktif</h6>
+                    <h3>{{ $dashboardSummary['active_questions'] }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card card-stat">
+                <div class="card-body">
+                    <div class="icon-box" style="background: #f0f9ff; color: #0ea5e9;">
+                        <i class="fas fa-user-graduate"></i>
+                    </div>
+                    <h6>Siswa Tervalidasi</h6>
+                    <h3>{{ $dashboardSummary['evaluated_students'] }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card card-stat">
+                <div class="card-body">
+                    <div class="icon-box" style="background: #fff7ed; color: #f59e0b;">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h6>Avg. Skor Total</h6>
+                    <div class="d-flex gap-2 mt-2">
+                        <span class="badge bg-primary px-2">W {{ number_format($dashboardSummary['avg_web'], 1) }}</span>
+                        <span class="badge bg-success px-2">M {{ number_format($dashboardSummary['avg_marketing'], 1) }}</span>
+                        <span class="badge bg-danger px-2">A {{ number_format($dashboardSummary['avg_admin'], 1) }}</span>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
+
+    <div class="row g-4 mb-5">
         <div class="col-lg-6">
-            <div class="card">
-                <div class="card-header bg-white border-bottom py-3">
-                    <h6 class="mb-0"><i class="fas fa-chart-pie"></i> Distribusi Rekomendasi PKL</h6>
+            <div class="chart-panel">
+                <div class="form-section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    Komparasi Rata-rata Skor Per Bidang
                 </div>
-                <div class="card-body">
-                    <div class="chart-wrap">
-                        <canvas id="recommendationChart"></canvas>
+                <div class="chart-canvas-wrap">
+                    @if($dashboardSummary['avg_web'] == 0 && $dashboardSummary['avg_marketing'] == 0 && $dashboardSummary['avg_admin'] == 0)
+                        <div class="chart-empty-overlay">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>Belum Ada Data Skor</span>
+                        </div>
+                    @endif
+                    <canvas id="avgScoreChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="chart-panel">
+                <div class="form-section-title">
+                    <i class="fas fa-chart-pie"></i>
+                    Distribusi Rekomendasi Industri
+                </div>
+                <div class="chart-canvas-wrap">
+                    @if($recommendationCounts->isEmpty())
+                        <div class="chart-empty-overlay">
+                            <i class="fas fa-pie-chart"></i>
+                            <span>Belum Ada Rekomendasi</span>
+                        </div>
+                    @endif
+                    <canvas id="recommendationChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <!-- Ranking Web -->
+        <div class="col-lg-4">
+            <div class="table-card h-100">
+                <div class="p-3 border-bottom d-flex align-items-center gap-2">
+                    <div class="p-2 rounded-3 bg-primary bg-opacity-10 text-primary">
+                        <i class="fas fa-code"></i>
+                    </div>
+                    <h6 class="mb-0 fw-800 text-dark">Top Web Programming</h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+                            <thead class="bg-light bg-opacity-50">
+                                <tr>
+                                    <th class="ps-3 py-2 border-0" style="width: 50px;">#</th>
+                                    <th class="py-2 border-0">Siswa</th>
+                                    <th class="pe-3 py-2 border-0 text-end">Skor</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($rankingWeb as $idx => $item)
+                                    <tr>
+                                        <td class="ps-3">
+                                            <div class="rank-badge {{ $idx < 3 ? 'rank-'.($idx+1) : '' }}">
+                                                {{ $idx + 1 }}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="ranking-avatar">
+                                                    {{ substr(optional($item->student)->full_name ?? 'S', 0, 1) }}
+                                                </div>
+                                                <span class="text-dark fw-600 text-truncate" style="max-width: 120px;">
+                                                    {{ optional($item->student)->full_name ?? '-' }}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td class="pe-3 text-end">
+                                            <span class="badge bg-indigo-soft text-primary fw-bold">{{ $item->total_web }}</span>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr><td colspan="3" class="text-center py-4 text-muted small">Belum ada data</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ranking Marketing -->
+        <div class="col-lg-4">
+            <div class="table-card h-100">
+                <div class="p-3 border-bottom d-flex align-items-center gap-2">
+                    <div class="p-2 rounded-3 bg-success bg-opacity-10 text-success">
+                        <i class="fas fa-bullhorn"></i>
+                    </div>
+                    <h6 class="mb-0 fw-800 text-dark">Top Digital Marketing</h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+                            <thead class="bg-light bg-opacity-50">
+                                <tr>
+                                    <th class="ps-3 py-2 border-0" style="width: 50px;">#</th>
+                                    <th class="py-2 border-0">Siswa</th>
+                                    <th class="pe-3 py-2 border-0 text-end">Skor</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($rankingMarketing as $idx => $item)
+                                    <tr>
+                                        <td class="ps-3">
+                                            <div class="rank-badge {{ $idx < 3 ? 'rank-'.($idx+1) : '' }}">
+                                                {{ $idx + 1 }}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="ranking-avatar">
+                                                    {{ substr(optional($item->student)->full_name ?? 'S', 0, 1) }}
+                                                </div>
+                                                <span class="text-dark fw-600 text-truncate" style="max-width: 120px;">
+                                                    {{ optional($item->student)->full_name ?? '-' }}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td class="pe-3 text-end">
+                                            <span class="badge bg-success-soft text-success fw-bold">{{ $item->total_marketing }}</span>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr><td colspan="3" class="text-center py-4 text-muted small">Belum ada data</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ranking Admin -->
+        <div class="col-lg-4">
+            <div class="table-card h-100">
+                <div class="p-3 border-bottom d-flex align-items-center gap-2">
+                    <div class="p-2 rounded-3 bg-danger bg-opacity-10 text-danger">
+                        <i class="fas fa-file-invoice"></i>
+                    </div>
+                    <h6 class="mb-0 fw-800 text-dark">Top Administratif</h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+                            <thead class="bg-light bg-opacity-50">
+                                <tr>
+                                    <th class="ps-3 py-2 border-0" style="width: 50px;">#</th>
+                                    <th class="py-2 border-0">Siswa</th>
+                                    <th class="pe-3 py-2 border-0 text-end">Skor</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($rankingAdmin as $idx => $item)
+                                    <tr>
+                                        <td class="ps-3">
+                                            <div class="rank-badge {{ $idx < 3 ? 'rank-'.($idx+1) : '' }}">
+                                                {{ $idx + 1 }}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="ranking-avatar">
+                                                    {{ substr(optional($item->student)->full_name ?? 'S', 0, 1) }}
+                                                </div>
+                                                <span class="text-dark fw-600 text-truncate" style="max-width: 120px;">
+                                                    {{ optional($item->student)->full_name ?? '-' }}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td class="pe-3 text-end">
+                                            <span class="badge bg-danger-soft text-danger fw-bold">{{ $item->total_admin }}</span>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr><td colspan="3" class="text-center py-4 text-muted small">Belum ada data</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="row g-3 mb-4">
-        <div class="col-lg-4">
-            <div class="card h-100">
-                <div class="card-header bg-white border-bottom py-3">
-                    <h6 class="mb-0">Ranking Web Programming</h6>
-                </div>
-                <div class="card-body p-0">
-                    <table class="table table-sm mb-0">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Siswa</th>
-                                <th>Skor</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($rankingWeb as $idx => $item)
-                                <tr>
-                                    <td>{{ $idx + 1 }}</td>
-                                    <td>{{ optional($item->student)->full_name ?? '-' }}</td>
-                                    <td><strong>{{ $item->total_web }}</strong></td>
-                                </tr>
-                            @empty
-                                <tr><td colspan="3" class="text-center text-muted">Belum ada data</td></tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-4">
-            <div class="card h-100">
-                <div class="card-header bg-white border-bottom py-3">
-                    <h6 class="mb-0">Ranking Digital Marketing</h6>
-                </div>
-                <div class="card-body p-0">
-                    <table class="table table-sm mb-0">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Siswa</th>
-                                <th>Skor</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($rankingMarketing as $idx => $item)
-                                <tr>
-                                    <td>{{ $idx + 1 }}</td>
-                                    <td>{{ optional($item->student)->full_name ?? '-' }}</td>
-                                    <td><strong>{{ $item->total_marketing }}</strong></td>
-                                </tr>
-                            @empty
-                                <tr><td colspan="3" class="text-center text-muted">Belum ada data</td></tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-4">
-            <div class="card h-100">
-                <div class="card-header bg-white border-bottom py-3">
-                    <h6 class="mb-0">Ranking Administratif</h6>
-                </div>
-                <div class="card-body p-0">
-                    <table class="table table-sm mb-0">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Siswa</th>
-                                <th>Skor</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($rankingAdmin as $idx => $item)
-                                <tr>
-                                    <td>{{ $idx + 1 }}</td>
-                                    <td>{{ optional($item->student)->full_name ?? '-' }}</td>
-                                    <td><strong>{{ $item->total_admin }}</strong></td>
-                                </tr>
-                            @empty
-                                <tr><td colspan="3" class="text-center text-muted">Belum ada data</td></tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row g-3 mb-4">
+    <div class="row g-4 mb-5">
         <div class="col-lg-6">
-            <div class="card h-100">
-                <div class="card-header bg-white border-bottom py-3">
-                    <h6 class="mb-0"><i class="fas fa-file-import"></i> Import Soal Batch 2 CT</h6>
+            <div class="table-card p-4">
+                <div class="form-section-title">
+                    <i class="fas fa-file-import text-primary"></i>
+                    Import Data Soal
                 </div>
-                <div class="card-body">
-                    <form method="POST" action="{{ route('admin.batch2ct.import.json') }}" enctype="multipart/form-data" class="mb-3">
-                        @csrf
-                        <label class="form-label">Import JSON</label>
-                        <div class="input-group">
-                            <input type="file" name="json_file" class="form-control" accept=".json,.txt" required>
-                            <button class="btn btn-outline-primary" type="submit">Import JSON</button>
-                        </div>
-                    </form>
+                <p class="text-muted small mb-4">Gunakan form di bawah untuk menambahkan soal secara massal melalui file Excel.</p>
+                
 
-                    <form method="POST" action="{{ route('admin.batch2ct.import.excel') }}" enctype="multipart/form-data">
-                        @csrf
-                        <label class="form-label">Import Excel (.xlsx)</label>
-                        <div class="input-group">
-                            <input type="file" name="excel_file" class="form-control" accept=".xlsx" required>
-                            <button class="btn btn-outline-success" type="submit">Import Excel</button>
-                        </div>
-                    </form>
-                </div>
+
+                <form method="POST" action="{{ route('admin.batch2ct.import.excel') }}" enctype="multipart/form-data">
+                    @csrf
+                    <label class="form-label text-muted small fw-bold">IMPORT EXCEL (.XLSX)</label>
+                    <div class="input-group">
+                        <input type="file" name="excel_file" class="form-control bg-light" accept=".xlsx" required>
+                        <button class="btn btn-success" type="submit">Import</button>
+                    </div>
+                </form>
             </div>
         </div>
         <div class="col-lg-6">
-            <div class="card h-100">
-                <div class="card-header bg-white border-bottom py-3">
-                    <h6 class="mb-0"><i class="fas fa-file-export"></i> Export Soal Batch 2 CT</h6>
+            <div class="table-card p-4 h-100 d-flex flex-column">
+                <div class="form-section-title">
+                    <i class="fas fa-file-export text-warning"></i>
+                    Export Data Soal
                 </div>
-                <div class="card-body d-flex flex-column justify-content-center">
-                    <a href="{{ route('admin.batch2ct.export.json') }}" class="btn btn-outline-primary mb-2">
-                        <i class="fas fa-file-code"></i> Export JSON
+                <p class="text-muted small mb-4">Gunakan fitur export untuk backup atau mengunduh template format soal.</p>
+                <div class="d-grid gap-3 mt-auto">
+
+                    <a href="{{ route('admin.batch2ct.export.excel') }}" class="btn btn-outline-success border-2 fw-bold">
+                        <i class="fas fa-file-excel me-2"></i> Download Excel
                     </a>
-                    <a href="{{ route('admin.batch2ct.export.excel') }}" class="btn btn-outline-success">
-                        <i class="fas fa-file-excel"></i> Export Excel
-                    </a>
-                    <small class="text-muted mt-3">Format export: satu baris per opsi jawaban.</small>
+                </div>
+                <div class="alert alert-light mt-4 mb-0 py-2 border">
+                    <small class="text-muted"><i class="fas fa-info-circle me-1"></i> Format export: satu baris per opsi jawaban.</small>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="card mb-4">
-        <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
-            <h6 class="mb-0"><i class="fas fa-plus-circle"></i> Tambah Soal Batch 2 CT</h6>
-            <small class="text-muted">Metode Weighted Scoring W-M-A</small>
+    <div class="table-card p-4 mb-5">
+        <div class="form-section-title">
+            <i class="fas fa-plus-circle text-primary"></i>
+            Tambah Soal Batch 2 CT
         </div>
-        <div class="card-body">
-            <form method="POST" action="{{ route('admin.batch2ct.questions.store') }}" id="ctQuestionForm">
-                @csrf
-                <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">Jenis Computational Thinking</label>
-                        <select class="form-select" name="jenis_ct" required>
-                            <option value="">-- Pilih Jenis CT --</option>
-                            @foreach($ctTypes as $type)
-                                <option value="{{ $type }}">{{ $type }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">Level Kesulitan</label>
-                        <select class="form-select" name="level_kesulitan" required>
-                            @foreach($difficultyLevels as $level)
-                                <option value="{{ $level }}">{{ strtoupper($level) }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-4 mb-3 d-flex align-items-end">
-                        <div class="form-check mb-2">
-                            <input type="checkbox" class="form-check-input" name="is_active" id="ctQuestionActive" value="1" checked>
-                            <label class="form-check-label" for="ctQuestionActive">Soal aktif</label>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Narasi Soal</label>
-                    <textarea class="form-control" name="narasi_soal" rows="3" required placeholder="Tuliskan narasi soal dengan konteks Computational Thinking"></textarea>
-                </div>
-
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <label class="form-label mb-0">Opsi Jawaban + Bobot (W, M, A)</label>
-                    <button type="button" class="btn btn-sm btn-outline-primary" id="addOptionBtn">
-                        <i class="fas fa-plus"></i> Tambah Opsi
-                    </button>
-                </div>
-
-                <div class="table-responsive">
-                    <table class="table table-bordered align-middle" id="optionTable">
-                        <thead>
-                            <tr>
-                                <th style="width: 90px;">Label</th>
-                                <th>Teks Opsi</th>
-                                <th style="width: 110px;">Bobot W</th>
-                                <th style="width: 110px;">Bobot M</th>
-                                <th style="width: 110px;">Bobot A</th>
-                                <th style="width: 70px;">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-
-                <small class="text-muted d-block mb-3">Validasi: setiap opsi wajib punya minimal satu bobot dominan (nilai > 0).</small>
-
-                <button type="submit" class="btn btn-primary w-100">Simpan Soal Batch 2 CT</button>
-            </form>
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="card-header bg-white border-bottom py-3">
-            <h6 class="mb-0"><i class="fas fa-book"></i> Bank Soal Batch 2 CT</h6>
-        </div>
-        <div class="card-body border-bottom">
-            <form method="GET" action="{{ route('admin.batch2ct.index') }}" class="row g-2 align-items-end">
+        <form method="POST" action="{{ route('admin.batch2ct.questions.store') }}" id="ctQuestionForm">
+            @csrf
+            <div class="row g-4 mb-4">
                 <div class="col-md-4">
-                    <label class="form-label">Filter Jenis CT</label>
-                    <select class="form-select" name="jenis_ct">
+                    <label class="form-label fw-bold small text-muted">JENIS COMPUTATIONAL THINKING</label>
+                    <select class="form-select bg-light" name="jenis_ct" required>
+                        <option value="">-- Pilih Jenis CT --</option>
+                        @foreach($ctTypes as $type)
+                            <option value="{{ $type }}">{{ $type }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold small text-muted">LEVEL KESULITAN</label>
+                    <select class="form-select bg-light" name="level_kesulitan" required>
+                        @foreach($difficultyLevels as $level)
+                            <option value="{{ $level }}">{{ strtoupper($level) }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <div class="form-check form-switch mb-2">
+                        <input type="checkbox" class="form-check-input" name="is_active" id="ctQuestionActive" value="1" checked>
+                        <label class="form-check-label fw-bold text-dark" for="ctQuestionActive">Aktifkan Soal</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold small text-muted">NARASI SOAL</label>
+                <textarea class="form-control bg-light" name="narasi_soal" rows="4" required placeholder="Tuliskan narasi soal dengan konteks Computational Thinking..."></textarea>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <label class="form-label fw-bold small text-muted mb-0">OPSI JAWABAN & BOBOT SKOR (W-M-A)</label>
+                <button type="button" class="btn btn-sm btn-outline-primary fw-bold" id="addOptionBtn">
+                    <i class="fas fa-plus me-1"></i> Tambah Opsi
+                </button>
+            </div>
+
+            <div class="table-responsive mb-4 rounded-3 border">
+                <table class="table metric-table mb-0" id="optionTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 100px;">Label</th>
+                            <th>Teks Opsi</th>
+                            <th class="text-center" style="width: 110px;">Bobot W</th>
+                            <th class="text-center" style="width: 110px;">Bobot M</th>
+                            <th class="text-center" style="width: 110px;">Bobot A</th>
+                            <th class="text-center" style="width: 80px;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <div class="alert alert-info border-0 bg-light py-2 px-3 mb-4">
+                <small><i class="fas fa-info-circle me-1"></i> Setiap opsi wajib memiliki minimal satu bobot dominan (nilai > 0).</small>
+            </div>
+
+            <button type="submit" class="btn btn-premium w-100 py-3 shadow">
+                <i class="fas fa-save me-2"></i> Simpan Soal Batch 2 CT
+            </button>
+        </form>
+    </div>
+
+    <div class="table-card">
+        <div class="card-header bg-white border-bottom py-4 px-4">
+            <h5 class="mb-1 fw-bold text-dark"><i class="fas fa-database me-2 text-primary"></i> Bank Soal Batch 2 CT</h5>
+            <p class="text-muted small mb-0">Koleksi soal Computational Thinking yang terdaftar di sistem.</p>
+        </div>
+        <div class="p-4 border-bottom bg-light bg-opacity-50">
+            <form method="GET" action="{{ route('admin.batch2ct.index') }}" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold small text-muted">FILTER JENIS CT</label>
+                    <select class="form-select bg-white" name="jenis_ct">
                         <option value="">-- Semua Jenis CT --</option>
                         @foreach($ctTypes as $type)
                             <option value="{{ $type }}" {{ $selectedJenisCt === $type ? 'selected' : '' }}>{{ $type }}</option>
@@ -374,8 +699,8 @@
                     </select>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label">Filter Kesulitan</label>
-                    <select class="form-select" name="level_kesulitan">
+                    <label class="form-label fw-bold small text-muted">FILTER KESULITAN</label>
+                    <select class="form-select bg-white" name="level_kesulitan">
                         <option value="">-- Semua Level --</option>
                         @foreach($difficultyLevels as $level)
                             <option value="{{ $level }}" {{ $selectedDifficulty === $level ? 'selected' : '' }}>{{ strtoupper($level) }}</option>
@@ -383,63 +708,79 @@
                     </select>
                 </div>
                 <div class="col-md-4 d-flex gap-2">
-                    <button type="submit" class="btn btn-outline-primary w-100">Filter</button>
-                    <a href="{{ route('admin.batch2ct.index') }}" class="btn btn-outline-secondary w-100">Reset</a>
+                    <button type="submit" class="btn btn-primary flex-grow-1"><i class="fas fa-filter me-2"></i> Filter</button>
+                    <a href="{{ route('admin.batch2ct.index') }}" class="btn btn-outline-secondary px-3" title="Reset"><i class="fas fa-sync-alt"></i></a>
                 </div>
             </form>
         </div>
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
+        <div class="table-responsive table-scroll-container">
+            <table class="table table-hover mb-0 detail-table">
                 <thead>
                     <tr>
-                        <th style="width: 70px;">ID</th>
-                        <th>Soal</th>
-                        <th style="width: 220px;">Jenis CT</th>
-                        <th style="width: 110px;">Level</th>
-                        <th style="width: 120px;">Status</th>
-                        <th style="width: 160px;">Aksi</th>
+                        <th class="text-center" style="width: 70px;">ID</th>
+                        <th>Narasi Soal & Opsi Jawaban</th>
+                        <th>Metadata</th>
+                        <th class="text-center">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($questions as $question)
                         <tr>
-                            <td>{{ $question->id }}</td>
+                            <td class="text-center text-muted fw-bold">{{ $question->id }}</td>
                             <td>
-                                <div class="mb-2">{{ \Illuminate\Support\Str::limit($question->narasi_soal, 140) }}</div>
-                                @foreach($question->options as $option)
-                                    <div class="option-chip">
-                                        <strong>{{ $option->label_opsi }}</strong> - {{ $option->teks_opsi }}
-                                        <span class="ms-2">
-                                            <span class="legend-dot" style="background:#2563eb;"></span>W {{ $option->bobot_web }}
-                                        </span>
-                                        <span class="ms-2">
-                                            <span class="legend-dot" style="background:#16a34a;"></span>M {{ $option->bobot_marketing }}
-                                        </span>
-                                        <span class="ms-2">
-                                            <span class="legend-dot" style="background:#dc2626;"></span>A {{ $option->bobot_admin }}
-                                        </span>
-                                    </div>
-                                @endforeach
+                                <div class="mb-3 text-dark fw-500" style="line-height: 1.6;">{{ $question->narasi_soal }}</div>
+                                <div class="row g-2">
+                                    @foreach($question->options as $option)
+                                        <div class="col-12">
+                                            <div class="option-chip mb-0">
+                                                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                                    <div>
+                                                        <span class="badge bg-primary me-2">{{ $option->label_opsi }}</span>
+                                                        <span class="text-dark">{{ $option->teks_opsi }}</span>
+                                                    </div>
+                                                    <div class="d-flex gap-3">
+                                                        <span class="small"><span class="legend-dot" style="background:#4f46e5;"></span><span class="text-muted">W:</span> <strong>{{ $option->bobot_web }}</strong></span>
+                                                        <span class="small"><span class="legend-dot" style="background:#10b981;"></span><span class="text-muted">M:</span> <strong>{{ $option->bobot_marketing }}</strong></span>
+                                                        <span class="small"><span class="legend-dot" style="background:#ef4444;"></span><span class="text-muted">A:</span> <strong>{{ $option->bobot_admin }}</strong></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
                             </td>
-                            <td>{{ $question->jenis_ct }}</td>
-                            <td><span class="badge bg-light text-dark">{{ strtoupper($question->level_kesulitan) }}</span></td>
-                            <td>
-                                <span class="badge {{ $question->is_active ? 'bg-success' : 'bg-secondary' }}">
-                                    {{ $question->is_active ? 'Aktif' : 'Nonaktif' }}
-                                </span>
+                            <td style="min-width: 180px;">
+                                <div class="mb-2">
+                                    <span class="badge-soft badge-soft-class w-100 mb-1 d-flex justify-content-center">{{ $question->jenis_ct }}</span>
+                                    <span class="badge-soft badge-soft-industry w-100 d-flex justify-content-center">{{ strtoupper($question->level_kesulitan) }}</span>
+                                </div>
+                                @if($question->is_active)
+                                    <span class="badge bg-success w-100 py-2"><i class="fas fa-check-circle me-1"></i> Aktif</span>
+                                @else
+                                    <span class="badge bg-secondary w-100 py-2"><i class="fas fa-times-circle me-1"></i> Nonaktif</span>
+                                @endif
                             </td>
                             <td>
-                                <a href="{{ route('admin.batch2ct.questions.edit', $question->id) }}" class="btn btn-sm btn-outline-primary mb-1">Edit</a>
-                                <form method="POST" action="{{ route('admin.batch2ct.questions.delete', $question->id) }}" onsubmit="return confirm('Hapus soal ini?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button class="btn btn-sm btn-outline-danger">Hapus</button>
-                                </form>
+                                <div class="d-flex flex-column gap-2">
+                                    <a href="{{ route('admin.batch2ct.questions.edit', $question->id) }}" class="btn btn-sm btn-light border text-primary">
+                                        <i class="fas fa-edit me-1"></i> Edit
+                                    </a>
+                                    <form method="POST" action="{{ route('admin.batch2ct.questions.delete', $question->id) }}" onsubmit="return confirm('Hapus soal ini?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button class="btn btn-sm btn-light border text-danger w-100">
+                                            <i class="fas fa-trash-alt me-1"></i> Hapus
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center py-3 text-muted">Belum ada soal Batch 2 CT.</td>
+                            <td colspan="4" class="text-center py-5 text-muted">
+                                <i class="fas fa-folder-open d-block mb-3 fs-1 opacity-25"></i>
+                                Belum ada soal yang tersedia.
+                            </td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -469,16 +810,20 @@
 
     const avgCtx = document.getElementById('avgScoreChart');
     if (avgCtx) {
+        const isEmpty = chartAverage.values.every(v => v === 0);
+        const displayData = isEmpty ? [3.5, 2.8, 3.2] : chartAverage.values;
+        const displayColors = isEmpty ? ['#e2e8f0', '#e2e8f0', '#e2e8f0'] : ['#4f46e5', '#10b981', '#ef4444'];
+
         new Chart(avgCtx, {
             type: 'bar',
             data: {
                 labels: chartAverage.labels,
                 datasets: [{
                     label: 'Rata-rata skor',
-                    data: chartAverage.values,
-                    backgroundColor: ['#2563eb', '#16a34a', '#dc2626'],
-                    borderRadius: 10,
-                    maxBarThickness: 55,
+                    data: displayData,
+                    backgroundColor: displayColors,
+                    borderRadius: 12,
+                    maxBarThickness: 50,
                 }],
             },
             options: {
@@ -486,27 +831,57 @@
                 maintainAspectRatio: false,
                 plugins: {
                     legend: { display: false },
+                    tooltip: {
+                        enabled: !isEmpty,
+                        padding: 12,
+                        borderRadius: 10,
+                        backgroundColor: '#1e293b'
+                    }
                 },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 4,
+                        grid: { borderDash: [5, 5], color: '#f1f5f9' }
+                    },
+                    x: { grid: { display: false } }
+                }
             },
         });
     }
 
     const recommendationCtx = document.getElementById('recommendationChart');
     if (recommendationCtx) {
+        const isEmpty = recommendationChartData.values.length === 0 || recommendationChartData.values.every(v => v === 0);
+        const displayData = isEmpty ? [1] : recommendationChartData.values;
+        const displayLabels = isEmpty ? ['Belum ada data'] : recommendationChartData.labels;
+        const displayColors = isEmpty ? ['#f1f5f9'] : ['#4f46e5', '#10b981', '#ef4444', '#f59e0b', '#7c3aed', '#0ea5e9'];
+
         new Chart(recommendationCtx, {
             type: 'doughnut',
             data: {
-                labels: recommendationChartData.labels,
+                labels: displayLabels,
                 datasets: [{
-                    data: recommendationChartData.values,
-                    backgroundColor: ['#2563eb', '#16a34a', '#dc2626', '#f59e0b', '#7c3aed', '#0ea5e9'],
+                    data: displayData,
+                    backgroundColor: displayColors,
+                    borderWidth: isEmpty ? 0 : 2
                 }],
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                cutout: '70%',
                 plugins: {
-                    legend: { position: 'bottom' },
+                    legend: { 
+                        position: 'bottom',
+                        display: !isEmpty,
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20,
+                            font: { size: 11, weight: '600' }
+                        }
+                    },
+                    tooltip: { enabled: !isEmpty }
                 },
             },
         });
@@ -526,17 +901,18 @@
 
         const row = `
             <tr data-index="${index}">
-                <td><input type="text" class="form-control" data-field="label" name="options[${index}][label]" value="${label}" required></td>
-                <td><input type="text" class="form-control" data-field="teks" name="options[${index}][teks]" value="${text}" required></td>
-                <td><input type="number" min="0" max="4" class="form-control score-input" data-field="bobot_web" name="options[${index}][bobot_web]" value="${w}" required></td>
-                <td><input type="number" min="0" max="4" class="form-control score-input" data-field="bobot_marketing" name="options[${index}][bobot_marketing]" value="${m}" required></td>
-                <td><input type="number" min="0" max="4" class="form-control score-input" data-field="bobot_admin" name="options[${index}][bobot_admin]" value="${a}" required></td>
-                <td><button type="button" class="btn btn-sm btn-outline-danger remove-option">Hapus</button></td>
+                <td class="p-2"><input type="text" class="form-control score-input w-100" data-field="label" name="options[${index}][label]" value="${label}" required></td>
+                <td class="p-2"><input type="text" class="form-control bg-light" data-field="teks" name="options[${index}][teks]" value="${text}" required placeholder="Contoh: Sangat Setuju"></td>
+                <td class="p-2"><input type="number" min="0" max="4" class="form-control score-input w-100" data-field="bobot_web" name="options[${index}][bobot_web]" value="${w}" required></td>
+                <td class="p-2"><input type="number" min="0" max="4" class="form-control score-input w-100" data-field="bobot_marketing" name="options[${index}][bobot_marketing]" value="${m}" required></td>
+                <td class="p-2"><input type="number" min="0" max="4" class="form-control score-input w-100" data-field="bobot_admin" name="options[${index}][bobot_admin]" value="${a}" required></td>
+                <td class="p-2 text-center"><button type="button" class="btn btn-sm btn-outline-danger remove-option rounded-circle" style="width:32px; height:32px; padding:0;"><i class="fas fa-times"></i></button></td>
             </tr>
         `;
 
         document.querySelector('#optionTable tbody').insertAdjacentHTML('beforeend', row);
     }
+
 
     function reindexRows() {
         const rows = document.querySelectorAll('#optionTable tbody tr');

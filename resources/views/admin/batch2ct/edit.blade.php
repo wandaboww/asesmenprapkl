@@ -1,52 +1,52 @@
-@extends('layouts.app')
+@extends('layouts.admin')
+
+@section('page_title', 'Edit Soal Batch 2 CT')
 
 @section('styles')
 <style>
-    body { background: #f4f6f9; }
-    .navbar { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); padding: 15px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-    .navbar-brand { font-weight: 700; font-size: 1.4rem; }
-    .nav-link { font-weight: 500; transition: 0.3s; }
-    .nav-link:hover { transform: translateY(-2px); color: #fff !important; }
-    .card { border-radius: 14px; border: none; box-shadow: 0 8px 24px rgba(0,0,0,0.06); }
-
-    @media (max-width: 768px) {
-        .navbar-collapse { padding-top: 15px; }
-        .admin-user-info {
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            width: 100%;
-            justify-content: space-between;
-        }
+    .table-card {
+        border-radius: 24px;
+        border: none;
+        box-shadow: 0 4px 25px rgba(0,0,0,0.03);
+        background: #fff;
+        overflow: hidden;
     }
+
+    .form-section-title {
+        font-weight: 800;
+        color: #1e293b;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .metric-table th {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #64748b;
+        background: #f8fafc;
+        padding: 12px 15px !important;
+    }
+
+    .metric-table td {
+        padding: 12px 15px !important;
+        vertical-align: middle;
+    }
+
+    .score-input {
+        border-radius: 10px;
+        text-align: center;
+        font-weight: 700;
+        border: 1px solid #e2e8f0;
+    }
+
 </style>
 @endsection
 
 @section('content')
-<nav class="navbar navbar-dark navbar-expand-lg">
-    <div class="container-fluid">
-        <span class="navbar-brand"><i class="fas fa-shield-alt"></i> Admin Panel</span>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav me-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('admin.dashboard') }}">Dashboard</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link active" href="{{ route('admin.batch2ct.index') }}">Kelola Soal Batch 2 CT</a>
-                </li>
-            </ul>
-            <div class="d-flex align-items-center admin-user-info">
-                <span class="text-white me-3"><strong><i class="fas fa-user-circle"></i> {{ session('admin_name') }}</strong></span>
-                <a href="{{ route('admin.logout') }}" class="btn btn-sm btn-outline-light"><i class="fas fa-sign-out-alt"></i> Logout</a>
-            </div>
-        </div>
-    </div>
-</nav>
-
-<div class="container-fluid mt-4 mb-5">
+<div class="container-fluid">
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
@@ -65,91 +65,106 @@
         </div>
     @endif
 
-    <div class="card">
-        <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
-            <h5 class="mb-0"><i class="fas fa-edit"></i> Edit Soal Batch 2 CT</h5>
-            <a href="{{ route('admin.batch2ct.index') }}" class="btn btn-sm btn-outline-secondary">Kembali</a>
+    <div class="table-card p-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="form-section-title mb-0">
+                <i class="fas fa-edit text-primary"></i>
+                Edit Soal Batch 2 CT #{{ $question->id }}
+            </div>
+            <a href="{{ route('admin.batch2ct.bank-soal') }}" class="btn btn-light border btn-sm px-3 rounded-pill">
+                <i class="fas fa-arrow-left me-1"></i> Kembali
+            </a>
         </div>
-        <div class="card-body">
-            <form method="POST" action="{{ route('admin.batch2ct.questions.update', $question->id) }}" id="editCtQuestionForm">
-                @csrf
-                @method('PUT')
 
-                <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">Jenis CT</label>
-                        <select class="form-select" name="jenis_ct" required>
-                            @foreach($ctTypes as $type)
-                                <option value="{{ $type }}" {{ $question->jenis_ct === $type ? 'selected' : '' }}>{{ $type }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">Level Kesulitan</label>
-                        <select class="form-select" name="level_kesulitan" required>
-                            @foreach($difficultyLevels as $level)
-                                <option value="{{ $level }}" {{ $question->level_kesulitan === $level ? 'selected' : '' }}>{{ strtoupper($level) }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-4 mb-3 d-flex align-items-end">
-                        <div class="form-check mb-2">
-                            <input type="checkbox" class="form-check-input" name="is_active" id="questionActive" value="1" {{ $question->is_active ? 'checked' : '' }}>
-                            <label class="form-check-label" for="questionActive">Soal aktif</label>
-                        </div>
+        <form method="POST" action="{{ route('admin.batch2ct.questions.update', $question->id) }}" id="editCtQuestionForm">
+            @csrf
+            @method('PUT')
+
+            <div class="row g-4 mb-4">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold small text-muted">JENIS COMPUTATIONAL THINKING</label>
+                    <select class="form-select bg-light" name="jenis_ct" required>
+                        @foreach($ctTypes as $type)
+                            <option value="{{ $type }}" {{ $question->jenis_ct === $type ? 'selected' : '' }}>{{ $type }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold small text-muted">LEVEL KESULITAN</label>
+                    <select class="form-select bg-light" name="level_kesulitan" required>
+                        @foreach($difficultyLevels as $level)
+                            <option value="{{ $level }}" {{ $question->level_kesulitan === $level ? 'selected' : '' }}>{{ strtoupper($level) }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <div class="form-check form-switch mb-2">
+                        <input type="checkbox" class="form-check-input" name="is_active" id="questionActive" value="1" {{ $question->is_active ? 'checked' : '' }}>
+                        <label class="form-check-label fw-bold text-dark" for="questionActive">Aktifkan Soal</label>
                     </div>
                 </div>
+            </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Narasi Soal</label>
-                    <textarea class="form-control" name="narasi_soal" rows="3" required>{{ $question->narasi_soal }}</textarea>
-                </div>
+            <div class="mb-4">
+                <label class="form-label fw-bold small text-muted">NARASI SOAL</label>
+                <textarea class="form-control bg-light" name="narasi_soal" rows="4" required>{{ $question->narasi_soal }}</textarea>
+            </div>
 
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <label class="form-label mb-0">Opsi Jawaban + Bobot (W, M, A)</label>
-                    <button type="button" class="btn btn-sm btn-outline-primary" id="addOptionBtn">
-                        <i class="fas fa-plus"></i> Tambah Opsi
-                    </button>
-                </div>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <label class="form-label fw-bold small text-muted mb-0">OPSI JAWABAN & BOBOT SKOR (W-M-A)</label>
+                <button type="button" class="btn btn-sm btn-outline-primary fw-bold" id="addOptionBtn">
+                    <i class="fas fa-plus me-1"></i> Tambah Opsi
+                </button>
+            </div>
 
-                <div class="table-responsive">
-                    <table class="table table-bordered align-middle" id="optionTable">
-                        <thead>
-                            <tr>
-                                <th style="width: 90px;">Label</th>
-                                <th>Teks Opsi</th>
-                                <th style="width: 110px;">Bobot W</th>
-                                <th style="width: 110px;">Bobot M</th>
-                                <th style="width: 110px;">Bobot A</th>
-                                <th style="width: 70px;">Aksi</th>
+            <div class="table-responsive mb-4 rounded-3 border">
+                <table class="table metric-table mb-0" id="optionTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 100px;">Label</th>
+                            <th>Teks Opsi</th>
+                            <th class="text-center" style="width: 110px;">Bobot W</th>
+                            <th class="text-center" style="width: 110px;">Bobot M</th>
+                            <th class="text-center" style="width: 110px;">Bobot A</th>
+                            <th class="text-center" style="width: 80px;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($question->options as $index => $option)
+                            <tr data-index="{{ $index }}">
+                                <td class="p-2">
+                                    <input type="text" class="form-control score-input w-100" data-field="label" name="options[{{ $index }}][label]" value="{{ $option->label_opsi }}" required>
+                                </td>
+                                <td class="p-2">
+                                    <input type="text" class="form-control bg-light" data-field="teks" name="options[{{ $index }}][teks]" value="{{ $option->teks_opsi }}" required>
+                                </td>
+                                <td class="p-2">
+                                    <input type="number" min="0" max="4" class="form-control score-input w-100" data-field="bobot_web" name="options[{{ $index }}][bobot_web]" value="{{ $option->bobot_web }}" required>
+                                </td>
+                                <td class="p-2">
+                                    <input type="number" min="0" max="4" class="form-control score-input w-100" data-field="bobot_marketing" name="options[{{ $index }}][bobot_marketing]" value="{{ $option->bobot_marketing }}" required>
+                                </td>
+                                <td class="p-2">
+                                    <input type="number" min="0" max="4" class="form-control score-input w-100" data-field="bobot_admin" name="options[{{ $index }}][bobot_admin]" value="{{ $option->bobot_admin }}" required>
+                                </td>
+                                <td class="p-2 text-center">
+                                    <button type="button" class="btn btn-sm btn-outline-danger remove-option rounded-circle" style="width:32px; height:32px; padding:0;"><i class="fas fa-times"></i></button>
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($question->options as $index => $option)
-                                <tr data-index="{{ $index }}">
-                                    <td>
-                                        <input type="text" class="form-control" data-field="label" name="options[{{ $index }}][label]" value="{{ $option->label_opsi }}" required>
-                                    </td>
-                                    <td>
-                                        <input type="text" class="form-control" data-field="teks" name="options[{{ $index }}][teks]" value="{{ $option->teks_opsi }}" required>
-                                    </td>
-                                    <td>
-                                        <input type="number" min="0" max="4" class="form-control" data-field="bobot_web" name="options[{{ $index }}][bobot_web]" value="{{ $option->bobot_web }}" required>
-                                    </td>
-                                    <td>
-                                        <input type="number" min="0" max="4" class="form-control" data-field="bobot_marketing" name="options[{{ $index }}][bobot_marketing]" value="{{ $option->bobot_marketing }}" required>
-                                    </td>
-                                    <td>
-                                        <input type="number" min="0" max="4" class="form-control" data-field="bobot_admin" name="options[{{ $index }}][bobot_admin]" value="{{ $option->bobot_admin }}" required>
-                                    </td>
-                                    <td>
-                                        <button type="button" class="btn btn-sm btn-outline-danger remove-option">Hapus</button>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="alert alert-info border-0 bg-light py-2 px-3 mb-4">
+                <small><i class="fas fa-info-circle me-1"></i> Setiap opsi wajib memiliki minimal satu bobot dominan (nilai > 0).</small>
+            </div>
+
+            <button type="submit" class="btn btn-premium w-100 py-3 shadow">
+                <i class="fas fa-save me-2"></i> Simpan Perubahan Soal
+            </button>
+        </form>
+    </div>
 
                 <small class="text-muted d-block mb-3">Setiap opsi harus memiliki minimal satu bobot > 0.</small>
 
@@ -187,17 +202,18 @@
         const label = labelByIndex(index);
         const row = `
             <tr data-index="${index}">
-                <td><input type="text" class="form-control" data-field="label" name="options[${index}][label]" value="${label}" required></td>
-                <td><input type="text" class="form-control" data-field="teks" name="options[${index}][teks]" required></td>
-                <td><input type="number" min="0" max="4" class="form-control" data-field="bobot_web" name="options[${index}][bobot_web]" value="0" required></td>
-                <td><input type="number" min="0" max="4" class="form-control" data-field="bobot_marketing" name="options[${index}][bobot_marketing]" value="0" required></td>
-                <td><input type="number" min="0" max="4" class="form-control" data-field="bobot_admin" name="options[${index}][bobot_admin]" value="0" required></td>
-                <td><button type="button" class="btn btn-sm btn-outline-danger remove-option">Hapus</button></td>
+                <td class="p-2"><input type="text" class="form-control score-input w-100" data-field="label" name="options[${index}][label]" value="${label}" required></td>
+                <td class="p-2"><input type="text" class="form-control bg-light" data-field="teks" name="options[${index}][teks]" required placeholder="Contoh: Sangat Setuju"></td>
+                <td class="p-2"><input type="number" min="0" max="4" class="form-control score-input w-100" data-field="bobot_web" name="options[${index}][bobot_web]" value="0" required></td>
+                <td class="p-2"><input type="number" min="0" max="4" class="form-control score-input w-100" data-field="bobot_marketing" name="options[${index}][bobot_marketing]" value="0" required></td>
+                <td class="p-2"><input type="number" min="0" max="4" class="form-control score-input w-100" data-field="bobot_admin" name="options[${index}][bobot_admin]" value="0" required></td>
+                <td class="p-2 text-center"><button type="button" class="btn btn-sm btn-outline-danger remove-option rounded-circle" style="width:32px; height:32px; padding:0;"><i class="fas fa-times"></i></button></td>
             </tr>
         `;
 
         document.querySelector('#optionTable tbody').insertAdjacentHTML('beforeend', row);
     }
+
 
     document.getElementById('addOptionBtn').addEventListener('click', function () {
         const index = document.querySelectorAll('#optionTable tbody tr').length;

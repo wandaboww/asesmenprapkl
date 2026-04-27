@@ -9,6 +9,37 @@
     .answer-option:hover { border-color: #0d6efd; background-color: #f8f9fa; }
     .answer-option.selected { border-color: #0d6efd; background-color: #cfe2ff; }
     .category-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+    
+    /* Progress Bar Styles */
+    .sticky-progress {
+        position: -webkit-sticky;
+        position: sticky;
+        top: 56px; /* Bootstrap navbar height */
+        z-index: 1020;
+        background: white;
+        padding: 15px 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        border-bottom: 1px solid #dee2e6;
+        margin-bottom: 25px;
+    }
+    .progress {
+        height: 12px;
+        border-radius: 10px;
+        background-color: #e9ecef;
+    }
+    .progress-bar {
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        transition: width 0.4s ease;
+    }
+    .progress-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: #495057;
+    }
 </style>
 @endsection
 
@@ -34,7 +65,24 @@
     </div>
 </nav>
 
-<div class="container mt-4 mb-5">
+<!-- Sticky Progress Bar -->
+<div class="sticky-progress">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-10">
+                <div class="progress-info">
+                    <span><i class="fas fa-tasks me-1"></i> Progress Pengerjaan</span>
+                    <span id="progress-text">0% (0/0)</span>
+                </div>
+                <div class="progress">
+                    <div id="main-progress-bar" class="progress-bar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mt-2 mb-5">
     @if(session('error'))
         <div class="row justify-content-center mb-3">
             <div class="col-md-10">
@@ -108,6 +156,27 @@
 
 @section('scripts')
 <script>
+    function updateProgress() {
+        const totalQuestions = new Set($('input[type="radio"]').map(function() {
+            return $(this).attr('name');
+        }).get()).size;
+        const answeredQuestions = $('input[type="radio"]:checked').length;
+        const percentage = totalQuestions > 0 ? Math.round((answeredQuestions / totalQuestions) * 100) : 0;
+        
+        $('#main-progress-bar').css('width', percentage + '%').attr('aria-valuenow', percentage);
+        $('#progress-text').text(`${percentage}% (${answeredQuestions}/${totalQuestions})`);
+        
+        if (percentage === 100) {
+            $('#main-progress-bar').addClass('bg-success');
+        } else {
+            $('#main-progress-bar').removeClass('bg-success');
+        }
+    }
+
+    $(document).ready(function() {
+        updateProgress();
+    });
+
     $('.answer-option').click(function() {
         const questionId = $(this).data('question');
         const optionId = $(this).data('option');
@@ -115,6 +184,8 @@
         $(`[data-question="${questionId}"]`).removeClass('selected');
         $(this).addClass('selected');
         $(`input[name="q_${questionId}"][value="${optionId}"]`).prop('checked', true);
+        
+        updateProgress();
     });
     
     $('#assessmentForm').submit(function(e) {

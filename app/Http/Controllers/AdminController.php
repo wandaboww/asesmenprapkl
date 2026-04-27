@@ -7,7 +7,9 @@ use App\Models\AssessmentAnswer;
 use App\Models\AssessmentBatch;
 use App\Models\AssessmentQuestion;
 use App\Models\AssessmentQuestionOption;
+use App\Models\AssessmentRecommendation;
 use App\Models\AssessmentSubmission;
+use App\Models\BatchTwoCtStudentResult;
 use App\Models\CompetencyCategory;
 use App\Models\Student;
 use App\Models\StudentClass;
@@ -72,17 +74,35 @@ class AdminController extends Controller
             },
         ])->orderBy('class_id')->orderBy('full_name')->get();
 
+        // Fetch Batch 2 CT Results
+        $batchTwoCtResults = BatchTwoCtStudentResult::all()->keyBy('siswa_id');
+
         foreach ($students as $student) {
             $student->submissions_by_batch = $student->submissions->keyBy('batch_id');
+            $student->batch_two_ct_result = $batchTwoCtResults->get($student->id);
         }
 
         $totalStudents = $students->count();
+
+        // Fix: Total Submissions should count all unique submissions across all batches
+        // including the specialized Batch 2 CT results.
+        $totalAssessmentSubmissions = AssessmentSubmission::count();
+        $totalBatchTwoCtResults = BatchTwoCtStudentResult::count();
+        $totalSubmissions = $totalAssessmentSubmissions + $totalBatchTwoCtResults;
+
         $competencyLabels = ['Administrasi', 'Digital Marketing', 'Pemrograman'];
-        $batchStats = [];
 
         foreach ($comparisonBatches as $batch) {
+            $isBatchTwo = $this->isBatchTwoBatch($batch);
+
+            // For Batch 2, prefer CT result but still fallback to standard submission
+            // if it exists in assessment_submissions.
             $submissions = $students
-                ->map(function ($student) use ($batch) {
+                ->map(function ($student) use ($batch, $isBatchTwo) {
+                    if ($isBatchTwo) {
+                        return $student->batch_two_ct_result ?: $student->submissions_by_batch->get($batch->id);
+                    }
+
                     return $student->submissions_by_batch->get($batch->id);
                 })
                 ->filter();
@@ -92,11 +112,11 @@ class AdminController extends Controller
             $completionRate = $totalStudents > 0 ? round(($submittedCount / $totalStudents) * 100, 1) : 0;
 
             $avgRecommendationScore = round((float) $submissions
-                ->filter(function ($submission) {
-                    return $submission->recommendation !== null;
-                })
                 ->avg(function ($submission) {
-                    return (float) $submission->recommendation->score;
+                    if (isset($submission->rekomendasi)) { // BatchTwoCtStudentResult
+                        return max($submission->persen_web, $submission->persen_marketing, $submission->persen_admin);
+                    }
+                    return $submission->recommendation ? (float) $submission->recommendation->score : 0;
                 }), 1);
 
             $industryCounts = [];
@@ -106,19 +126,34 @@ class AdminController extends Controller
             }
 
             foreach ($submissions as $submission) {
-                if ($submission->recommendation && $submission->recommendation->industry) {
-                    $industryName = $submission->recommendation->industry->display_industry_name;
+                if (isset($submission->rekomendasi)) { // BatchTwoCtStudentResult
+                    $industryName = $submission->rekomendasi;
                     if (!isset($industryCounts[$industryName])) {
                         $industryCounts[$industryName] = 0;
                     }
                     $industryCounts[$industryName]++;
-                }
 
-                $categoryScores = $this->calculateCategoryScores($submission);
-                foreach ($competencyLabels as $label) {
-                    if (isset($categoryScores[$label])) {
-                        $competencyAccumulator[$label]['sum'] += (float) $categoryScores[$label]['percentage'];
-                        $competencyAccumulator[$label]['count']++;
+                    $competencyAccumulator['Pemrograman']['sum'] += $submission->persen_web;
+                    $competencyAccumulator['Pemrograman']['count']++;
+                    $competencyAccumulator['Digital Marketing']['sum'] += $submission->persen_marketing;
+                    $competencyAccumulator['Digital Marketing']['count']++;
+                    $competencyAccumulator['Administrasi']['sum'] += $submission->persen_admin;
+                    $competencyAccumulator['Administrasi']['count']++;
+                } else {
+                    if ($submission->recommendation && $submission->recommendation->industry) {
+                        $industryName = $submission->recommendation->industry->display_industry_name;
+                        if (!isset($industryCounts[$industryName])) {
+                            $industryCounts[$industryName] = 0;
+                        }
+                        $industryCounts[$industryName]++;
+                    }
+
+                    $categoryScores = $this->calculateCategoryScores($submission);
+                    foreach ($competencyLabels as $label) {
+                        if (isset($categoryScores[$label])) {
+                            $competencyAccumulator[$label]['sum'] += (float) $categoryScores[$label]['percentage'];
+                            $competencyAccumulator[$label]['count']++;
+                        }
                     }
                 }
             }
@@ -218,6 +253,10 @@ class AdminController extends Controller
                 $latestSubmission = $student->submissions->first();
                 $competencyLabel = $this->resolveRecommendationFieldFromSubmission($latestSubmission);
 
+                if (!$competencyLabel && $student->batch_two_ct_result) {
+                    $competencyLabel = $this->resolveRecommendationFieldFromCt($student->batch_two_ct_result);
+                }
+
                 if ($competencyLabel && isset($classCompetencyCounts[$competencyLabel])) {
                     $classCompetencyCounts[$competencyLabel]++;
                 }
@@ -226,8 +265,14 @@ class AdminController extends Controller
             $perBatch = [];
 
             foreach ($comparisonBatches as $batch) {
+                $isBatchTwo = $this->isBatchTwoBatch($batch);
+
                 $batchSubmissions = $classStudents
-                    ->map(function ($student) use ($batch) {
+                    ->map(function ($student) use ($batch, $isBatchTwo) {
+                        if ($isBatchTwo) {
+                            return $student->batch_two_ct_result ?: $student->submissions_by_batch->get($batch->id);
+                        }
+
                         return $student->submissions_by_batch->get($batch->id);
                     })
                     ->filter();
@@ -236,14 +281,22 @@ class AdminController extends Controller
 
                 $competencyCounts = array_fill_keys($competencyLabels, 0);
                 foreach ($batchSubmissions as $submission) {
-                    $industry = optional(optional($submission)->recommendation)->industry;
-                    if (!$industry) {
-                        continue;
-                    }
+                    if (isset($submission->rekomendasi)) { // BatchTwoCtStudentResult
+                        $industryName = $submission->rekomendasi;
+                        $competencyLabel = $this->normalizeCompetencyLabel($industryName);
+                        if ($competencyLabel === '-') {
+                            $competencyLabel = CompetencyCategory::normalizeDisplayName($industryName);
+                        }
+                    } else {
+                        $industry = optional(optional($submission)->recommendation)->industry;
+                        if (!$industry) {
+                            continue;
+                        }
 
-                    $competencyLabel = $this->normalizeCompetencyLabel((string) $industry->primary_competency);
-                    if ($competencyLabel === '-') {
-                        $competencyLabel = CompetencyCategory::normalizeDisplayName((string) $industry->display_industry_name);
+                        $competencyLabel = $this->normalizeCompetencyLabel((string) $industry->primary_competency);
+                        if ($competencyLabel === '-') {
+                            $competencyLabel = CompetencyCategory::normalizeDisplayName((string) $industry->display_industry_name);
+                        }
                     }
 
                     if (isset($competencyCounts[$competencyLabel])) {
@@ -288,14 +341,28 @@ class AdminController extends Controller
     {
         $selected = collect();
 
-        foreach (['batch 1', 'batch 2'] as $expectedName) {
-            $batch = $allBatches->first(function ($item) use ($expectedName) {
-                return strtolower(trim((string) $item->batch_name)) === $expectedName;
-            });
+        $batchOne = $allBatches->first(function ($item) {
+            return $this->isBatchOneLabel((string) $item->batch_name);
+        });
 
-            if ($batch) {
-                $selected->push($batch);
-            }
+        if ($batchOne) {
+            $selected->push($batchOne);
+        }
+
+        $batchTwo = $allBatches->first(function ($item) {
+            return $this->isBatchTwoLabel((string) $item->batch_name);
+        });
+
+        if ($batchTwo) {
+            $selected->push($batchTwo);
+        } else {
+            // If Batch 2 record is missing, create a virtual batch object for display
+            // to capture the Batch 2 CT results in dashboard/ranking.
+            $virtualBatch = new AssessmentBatch();
+            $virtualBatch->id = 999; // Unique ID for virtual batch
+            $virtualBatch->batch_name = 'Batch 2';
+            $virtualBatch->is_active = true;
+            $selected->push($virtualBatch);
         }
 
         if ($selected->count() < 2) {
@@ -318,10 +385,20 @@ class AdminController extends Controller
     public function results(Request $request)
     {
         $batches = AssessmentBatch::orderByDesc('id')->get();
+
+        // Add virtual Batch 2 to the collection if missing from DB
+        if (!$batches->contains(fn($b) => strtolower(trim($b->batch_name)) === 'batch 2')) {
+            $virtual = new AssessmentBatch();
+            $virtual->id = 999;
+            $virtual->batch_name = 'Batch 2';
+            $virtual->is_active = true;
+            $batches->push($virtual);
+        }
+
         $selectedBatchId = $this->resolveBatchId($request->integer('batch_id'));
         $selectedBatch = $batches->firstWhere('id', $selectedBatchId);
-        [$batchOneId, $batchTwoId] = $this->resolveBatchOneAndTwoIdsFromCollection($batches);
-        $isBatchTwoView = $batchTwoId && $selectedBatchId === $batchTwoId;
+        [$batchOneId] = $this->resolveBatchOneAndTwoIdsFromCollection($batches);
+        $isBatchTwoView = $this->isBatchTwoBatch($selectedBatch);
 
         $query = Student::with('studentClass')->orderBy('class_id')->orderBy('full_name');
 
@@ -331,13 +408,31 @@ class AdminController extends Controller
 
         if ($request->filled('status')) {
             if ($request->status === 'selesai') {
-                $query->whereHas('submissions', function ($submissionQuery) use ($selectedBatchId) {
-                    $submissionQuery->where('batch_id', $selectedBatchId);
+                $query->where(function ($studentQuery) use ($selectedBatchId, $isBatchTwoView) {
+                    $studentQuery->whereHas('submissions', function ($submissionQuery) use ($selectedBatchId) {
+                        $submissionQuery->where('batch_id', $selectedBatchId);
+                    });
+
+                    if ($isBatchTwoView) {
+                        $studentQuery->orWhereExists(function ($ctQuery) {
+                            $ctQuery->select(DB::raw(1))
+                                ->from('batch_two_ct_student_results')
+                                ->whereColumn('batch_two_ct_student_results.siswa_id', 'students.id');
+                        });
+                    }
                 });
             } else if ($request->status === 'belum') {
                 $query->whereDoesntHave('submissions', function ($submissionQuery) use ($selectedBatchId) {
                     $submissionQuery->where('batch_id', $selectedBatchId);
                 });
+
+                if ($isBatchTwoView) {
+                    $query->whereNotExists(function ($ctQuery) {
+                        $ctQuery->select(DB::raw(1))
+                            ->from('batch_two_ct_student_results')
+                            ->whereColumn('batch_two_ct_student_results.siswa_id', 'students.id');
+                    });
+                }
             }
         }
 
@@ -346,6 +441,14 @@ class AdminController extends Controller
                 ->with(['recommendation.industry', 'batch', 'answers.question.category'])
                 ->latest('submitted_at');
         }])->get();
+
+        // Fix: Fetch Batch 2 CT Results if relevant
+        $batchTwoCtResults = collect();
+        if ($isBatchTwoView) {
+            $batchTwoCtResults = BatchTwoCtStudentResult::whereIn('siswa_id', $students->pluck('id')->all())
+                ->get()
+                ->keyBy('siswa_id');
+        }
 
         $batchOneSubmissionsByStudent = collect();
         if ($isBatchTwoView && $batchOneId) {
@@ -366,10 +469,15 @@ class AdminController extends Controller
             $student->batch_one_recommendation_field = null;
             $student->batch_two_rank = null;
             $student->batch_two_rank_total = null;
+            $student->batch_two_ct_result = $batchTwoCtResults->get($student->id);
 
             if ($isBatchTwoView && $batchOneId) {
                 $batchOneSubmission = $batchOneSubmissionsByStudent->get($student->id);
                 $student->batch_one_recommendation_field = $this->resolveRecommendationFieldFromSubmission($batchOneSubmission);
+            }
+
+            if (empty($student->batch_one_recommendation_field) && $student->batch_two_ct_result) {
+                $student->batch_one_recommendation_field = $student->batch_two_ct_result->rekomendasi;
             }
 
             if ($student->selected_submission) {
@@ -404,19 +512,44 @@ class AdminController extends Controller
         if ($isBatchTwoView) {
             $rankBuckets = $students
                 ->filter(function ($student) {
-                    return $student->selected_submission && !empty($student->batch_one_recommendation_field);
+                    $hasResult = $student->selected_submission || $student->batch_two_ct_result;
+                    return $hasResult && !empty($student->batch_one_recommendation_field);
                 })
                 ->groupBy('batch_one_recommendation_field');
 
             foreach ($rankBuckets as $field => $bucketStudents) {
                 $sorted = $bucketStudents
                     ->sort(function ($studentA, $studentB) {
-                        $scoreA = (float) optional($studentA->selected_submission->recommendation)->score;
-                        $scoreB = (float) optional($studentB->selected_submission->recommendation)->score;
+                        $scoreA = 0;
+                        if ($studentA->selected_submission) {
+                            $scoreA = (float) optional($studentA->selected_submission->recommendation)->score;
+                        } elseif ($studentA->batch_two_ct_result) {
+                            $ct = $studentA->batch_two_ct_result;
+                            $scoreA = max($ct->persen_web, $ct->persen_marketing, $ct->persen_admin);
+                        }
+
+                        $scoreB = 0;
+                        if ($studentB->selected_submission) {
+                            $scoreB = (float) optional($studentB->selected_submission->recommendation)->score;
+                        } elseif ($studentB->batch_two_ct_result) {
+                            $ct = $studentB->batch_two_ct_result;
+                            $scoreB = max($ct->persen_web, $ct->persen_marketing, $ct->persen_admin);
+                        }
 
                         if (abs($scoreA - $scoreB) < 0.00001) {
-                            $timeA = optional($studentA->selected_submission->submitted_at)?->timestamp ?? PHP_INT_MAX;
-                            $timeB = optional($studentB->selected_submission->submitted_at)?->timestamp ?? PHP_INT_MAX;
+                            $timeA = PHP_INT_MAX;
+                            if ($studentA->selected_submission) {
+                                $timeA = optional($studentA->selected_submission->submitted_at)?->timestamp ?? PHP_INT_MAX;
+                            } elseif ($studentA->batch_two_ct_result) {
+                                $timeA = optional($studentA->batch_two_ct_result->submitted_at)?->timestamp ?? PHP_INT_MAX;
+                            }
+
+                            $timeB = PHP_INT_MAX;
+                            if ($studentB->selected_submission) {
+                                $timeB = optional($studentB->selected_submission->submitted_at)?->timestamp ?? PHP_INT_MAX;
+                            } elseif ($studentB->batch_two_ct_result) {
+                                $timeB = optional($studentB->batch_two_ct_result->submitted_at)?->timestamp ?? PHP_INT_MAX;
+                            }
 
                             if ($timeA === $timeB) {
                                 return strcmp((string) $studentA->full_name, (string) $studentB->full_name);
@@ -436,7 +569,14 @@ class AdminController extends Controller
 
                 foreach ($sorted as $studentItem) {
                     $position++;
-                    $score = (float) optional($studentItem->selected_submission->recommendation)->score;
+
+                    $score = 0;
+                    if ($studentItem->selected_submission) {
+                        $score = (float) optional($studentItem->selected_submission->recommendation)->score;
+                    } elseif ($studentItem->batch_two_ct_result) {
+                        $ct = $studentItem->batch_two_ct_result;
+                        $score = max($ct->persen_web, $ct->persen_marketing, $ct->persen_admin);
+                    }
 
                     if (is_null($previousScore) || abs($score - $previousScore) > 0.00001) {
                         $rank = $position;
@@ -459,11 +599,11 @@ class AdminController extends Controller
         $ordered = $batches->sortBy('id')->values();
 
         $batchOne = $ordered->first(function ($batch) {
-            return strtolower(trim((string) $batch->batch_name)) === 'batch 1';
+            return $this->isBatchOneLabel((string) $batch->batch_name);
         }) ?? $ordered->first();
 
         $batchTwo = $ordered->first(function ($batch) {
-            return strtolower(trim((string) $batch->batch_name)) === 'batch 2';
+            return $this->isBatchTwoLabel((string) $batch->batch_name);
         });
 
         if (!$batchTwo) {
@@ -492,16 +632,45 @@ class AdminController extends Controller
         return $fallback !== '-' ? $fallback : null;
     }
 
+    private function resolveRecommendationFieldFromCt(?BatchTwoCtStudentResult $result): ?string
+    {
+        if (!$result) {
+            return null;
+        }
+
+        $mapped = $this->normalizeCompetencyLabel((string) $result->rekomendasi);
+        if ($mapped !== '-') {
+            return $mapped;
+        }
+
+        $fallback = CompetencyCategory::normalizeDisplayName((string) $result->rekomendasi);
+        return in_array($fallback, ['Administrasi', 'Digital Marketing', 'Pemrograman'], true)
+            ? $fallback
+            : null;
+    }
+
     public function resetAssessment(Request $request, $student_id)
     {
         $batchId = $request->integer('batch_id') ?: $this->resolveBatchId(null);
+        $batch = AssessmentBatch::find($batchId);
 
         $submission = AssessmentSubmission::where('student_id', $student_id)
             ->where('batch_id', $batchId)
             ->first();
 
         if ($submission) {
-            $submission->delete();
+            DB::transaction(function () use ($submission, $student_id, $batch) {
+                // Delete related answers and recommendations first to ensure clean state
+                AssessmentAnswer::where('submission_id', $submission->id)->delete();
+                AssessmentRecommendation::where('submission_id', $submission->id)->delete();
+                $submission->delete();
+
+                // If this is Batch 2, also clear the Batch 2 CT results as they depend on it
+                if ($batch && strtolower(trim($batch->batch_name)) === 'batch 2') {
+                    BatchTwoCtStudentResult::where('siswa_id', $student_id)->delete();
+                }
+            });
+
             return back()->with('success', 'Hasil asesmen siswa pada batch terpilih berhasil direset.');
         }
 
@@ -511,11 +680,11 @@ class AdminController extends Controller
     public function manageStudents(Request $request)
     {
         $query = Student::with('studentClass')->orderBy('class_id')->orderBy('full_name');
-        
+
         if ($request->filled('class_id')) {
             $query->where('class_id', $request->class_id);
         }
-        
+
         $students = $query->get();
         $classes = StudentClass::whereIn('class_name', ['11 PPLG 1', '11 PPLG 2', '11 PPLG 3'])->orderBy('class_name')->get();
         return view('admin.students', compact('students', 'classes'));
@@ -535,7 +704,7 @@ class AdminController extends Controller
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
-        
+
         $sheet->setCellValue('A1', 'Nama Kelas (misal: 11 PPLG 1)');
         $sheet->setCellValue('B1', 'Nama Lengkap Siswa');
 
@@ -571,7 +740,7 @@ class AdminController extends Controller
 
                 $className = trim($row[0]);
                 $studentName = trim($row[1]);
-                
+
                 if (!in_array($className, ['11 PPLG 1', '11 PPLG 2', '11 PPLG 3'])) {
                     continue;
                 }
@@ -1264,6 +1433,10 @@ class AdminController extends Controller
 
     private function resolveBatchId(?int $requestedBatchId = null): ?int
     {
+        if ($requestedBatchId === 999) {
+            return 999;
+        }
+
         if ($requestedBatchId && AssessmentBatch::whereKey($requestedBatchId)->exists()) {
             return $requestedBatchId;
         }
@@ -1448,7 +1621,7 @@ class AdminController extends Controller
             return '-';
         }
 
-        if (str_contains($normalized, 'administrasi') || str_contains($normalized, 'administration')) {
+        if (str_contains($normalized, 'administrasi') || str_contains($normalized, 'administration') || str_contains($normalized, 'administratif')) {
             return 'Administrasi';
         }
 
@@ -1456,11 +1629,32 @@ class AdminController extends Controller
             return 'Digital Marketing';
         }
 
-        if (str_contains($normalized, 'pemrograman') || str_contains($normalized, 'programming')) {
+        if (str_contains($normalized, 'pemrograman') || str_contains($normalized, 'programming') || str_contains($normalized, 'web')) {
             return 'Pemrograman';
         }
 
         return '-';
+    }
+
+    private function isBatchOneLabel(string $value): bool
+    {
+        $normalized = strtolower(trim($value));
+        return str_contains($normalized, 'batch 1') || str_contains($normalized, 'batch1');
+    }
+
+    private function isBatchTwoLabel(string $value): bool
+    {
+        $normalized = strtolower(trim($value));
+        return str_contains($normalized, 'batch 2') || str_contains($normalized, 'batch2');
+    }
+
+    private function isBatchTwoBatch(?AssessmentBatch $batch): bool
+    {
+        if (!$batch) {
+            return false;
+        }
+
+        return $this->isBatchTwoLabel((string) $batch->batch_name);
     }
 
     private function resolveCategoryByLabel(string $categoryName): ?CompetencyCategory
