@@ -83,21 +83,139 @@ class BatchTwoCtAdminController extends Controller
         ));
     }
 
-    public function rankingLengkap()
+    public function rankingLengkap(Request $request)
+{
+    $query = BatchTwoCtStudentResult::with(['student.studentClass'])
+        ->orderByDesc('submitted_at')
+        ->orderByDesc('id');
+
+    if ($request->filled('kelas')) {
+        $query->whereHas('student', function ($q) use ($request) {
+            $q->where('class_id', $request->kelas);
+        });
+    }
+
+    // ── FIX: filter rekomendasi ──────────────────────────────────────────
+    if ($request->filled('rekomendasi')) {
+        $rek = $request->rekomendasi;
+
+        $query->where(function ($q) use ($rek) {
+            if ($rek === 'Web Programming') {
+                $q->whereIn('rekomendasi', ['Web Programming', 'Pemrograman']);
+            } elseif ($rek === 'Administratif') {
+                $q->whereIn('rekomendasi', ['Administratif', 'Administrasi']);
+            } else {
+                // Digital Marketing (dan nilai lain yang exact-match)
+                $q->where('rekomendasi', $rek);
+            }
+        });
+    }
+
+    $allLatestResults = $query->get()
+        ->unique('siswa_id')
+        ->values();
+
+    $allRanked = $allLatestResults->map(function ($r) {
+        $r->total_combined = $r->total_web + $r->total_marketing + $r->total_admin;
+        return $r;
+    })->sortByDesc('total_combined')->values();
+
+    if ($request->query('export') === 'excel') {
+        return $this->exportRankingExcel($allRanked);
+    }
+
+    $classes = \App\Models\StudentClass::whereIn('class_name', ['11 PPLG 1', '11 PPLG 2', '11 PPLG 3'])
+        ->orderBy('class_name')
+        ->get();
+
+    // ── FIX: gunakan associative array agar $val di blade = string, bukan index ──
+    $recommendations = [
+        'Web Programming'  => 'Web Programming',
+        'Digital Marketing' => 'Digital Marketing',
+        'Administratif'    => 'Administratif',
+    ];
+
+    return view('admin.batch2ct.ranking-lengkap', compact('allRanked', 'classes', 'recommendations'));
+}
+
+    private function exportRankingExcel($allRanked)
     {
-        $allLatestResults = BatchTwoCtStudentResult::with(['student.studentClass'])
-            ->orderByDesc('submitted_at')
-            ->orderByDesc('id')
-            ->get()
-            ->unique('siswa_id')
-            ->values();
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Ranking Lengkap');
 
-        $allRanked = $allLatestResults->map(function ($r) {
-            $r->total_combined = $r->total_web + $r->total_marketing + $r->total_admin;
-            return $r;
-        })->sortByDesc('total_combined')->values();
+        // Headers
+        $headers = ['Peringkat', 'Nama Siswa', 'Kelas', 'Skor Pemrograman (W)', 'Skor Digital Marketing (M)', 'Skor Administrasi (A)', 'Total Skor', 'Rekomendasi'];
+        $sheet->fromArray($headers, null, 'A1');
 
-        return view('admin.batch2ct.ranking-lengkap', compact('allRanked'));
+        // Styling Headers
+        $headerStyle = [
+            'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
+            'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF4F46E5']],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+            'borders' => [
+                'allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN],
+            ],
+        ];
+        $sheet->getStyle('A1:H1')->applyFromArray($headerStyle);
+
+        // Data
+        $data = [];
+        foreach ($allRanked as $idx => $r) {
+            $displayRec = match($r->rekomendasi) {
+                'Pemrograman' => 'Web Programming',
+                'Administrasi' => 'Administratif',
+                default => $r->rekomendasi
+            };
+            $data[] = [
+                $idx + 1,
+                optional($r->student)->full_name ?? '-',
+                optional(optional($r->student)->studentClass)->class_name ?? '-',
+                $r->total_web,
+                $r->total_marketing,
+                $r->total_admin,
+                $r->total_combined,
+                $displayRec ?? '-',
+            ];
+        }
+        $sheet->fromArray($data, null, 'A2');
+
+        // Styling Data
+        $highestRow = $sheet->getHighestRow();
+        if ($highestRow >= 2) {
+            $dataStyle = [
+                'borders' => [
+                    'allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN],
+                ],
+                'alignment' => [
+                    'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+                ]
+            ];
+            $sheet->getStyle('A2:H' . $highestRow)->applyFromArray($dataStyle);
+
+            // Center align specific columns
+            $centerCols = ['A', 'D', 'E', 'F', 'G'];
+            foreach ($centerCols as $col) {
+                $sheet->getStyle($col . '2:' . $col . $highestRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+            }
+        }
+
+        // Auto size columns
+        foreach (range('A', 'H') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $fileName = 'Ranking_Lengkap_Batch2_CT_' . date('Ymd_His') . '.xlsx';
+
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, $fileName, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
     }
 
     public function resetResult(Request $request)
@@ -650,14 +768,14 @@ class BatchTwoCtAdminController extends Controller
                 'options' => 'Label opsi harus unik untuk setiap soal.',
             ]);
         }
-        
+
         $hasPositiveWeight = false;
         foreach ($options as $i => $opt) {
             if (max((int)$opt['bobot_web'], (int)$opt['bobot_marketing'], (int)$opt['bobot_admin']) > 0) {
                 $hasPositiveWeight = true;
             }
         }
-        
+
         if (!$hasPositiveWeight) {
             throw ValidationException::withMessages([
                 'options' => 'Soal harus memiliki setidaknya satu opsi dengan bobot lebih dari 0.',

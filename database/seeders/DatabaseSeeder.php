@@ -52,7 +52,7 @@ class DatabaseSeeder extends Seeder
         }
 
         // Kelas
-        $classes = ['11 PPLG 1', '11 PPLG 2', '11 PPLG 3', 'XII RPL A', 'XII RPL B', 'XII BDP A', 'XII MM A'];
+        $classes = ['11 PPLG 1', '11 PPLG 2', '11 PPLG 3'];
         foreach ($classes as $c) {
             DB::table('classes')->insert(['class_name' => $c, 'created_at' => $now, 'updated_at' => $now]);
         }
@@ -93,7 +93,7 @@ class DatabaseSeeder extends Seeder
             'Apakah Anda bersedia bekerja dengan version control seperti Git?',
             'Apakah Anda tertarik dengan debugging dan testing kode secara menyeluruh?'
         ];
-        
+
         $q_admin = [
             'Apakah Anda terbiasa menangani pekerjaan administratif dan dokumentasi?',
             'Apakah Anda rapi dan teliti dalam pekerjaan?',
@@ -106,7 +106,7 @@ class DatabaseSeeder extends Seeder
             'Apakah Anda terbiasa membuat surat menyurat bisnis yang formal?',
             'Apakah Anda mampu mengelola agenda dan jadwal meeting pimpinan?'
         ];
-        
+
         $q_mkt = [
             'Apakah Anda tertarik dengan dunia digital marketing dan media sosial?',
             'Apakah Anda kreatif dalam membuat konten visual dan copywriting?',
